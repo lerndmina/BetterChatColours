@@ -1,0 +1,83 @@
+# BetterChatColours Configuration
+# A Paper plugin for chat color gradients with PlaceholderAPI integration
+
+# Color palette available to users
+colours:
+  red:
+    colour: "#FF0000"
+    displayname: "Red"
+    # permission: "chatcolors.color.red"  # Optional, uses chatcolors.color.use by default
+  
+  green:
+    colour: "#00FF00"
+    displayname: "Green"
+  
+  blue:
+    colour: "#0000FF"
+    displayname: "Blue"
+  
+  yellow:
+    colour: "#FFFF00"
+    displayname: "Yellow"
+  
+  purple:
+    colour: "#800080"
+    displayname: "Purple"
+    permission: "chatcolors.color.vip"  # Requires special permission
+  
+  orange:
+    colour: "#FFA500"
+    displayname: "Orange"
+  
+  pink:
+    colour: "#FFC0CB"
+    displayname: "Pink"
+  
+  cyan:
+    colour: "#00FFFF"
+    displayname: "Cyan"
+  
+  gold:
+    colour: "#FFD700"
+    displayname: "Gold"
+    permission: "chatcolors.color.premium"  # Premium color
+  
+  lime:
+    colour: "#32CD32"
+    displayname: "Lime"
+  
+  magenta:
+    colour: "#FF00FF"
+    displayname: "Magenta"
+  
+  aqua:
+    colour: "#00CED1"
+    displayname: "Aqua"
+
+# Plugin settings
+settings:
+  # Maximum number of colors allowed in a single gradient
+  max-colors-per-gradient: 5
+  
+  # Maximum number of presets any user can have (hard cap)
+  max-presets-per-user: 10
+  
+  # GUI inventory size (must be multiple of 9, recommended: 27, 36, 45, 54)
+  gui-size: 54
+  
+  # Whether to validate hex codes on startup
+  validate-hex-codes: true
+  
+  # Whether to strip existing color codes from messages before applying gradient
+  strip-existing-colors: true
+  
+  # Whether to preserve text formatting (bold, italic, etc.) when processing messages
+  preserve-formatting: true
+
+# Permission-based preset limits
+# Users will get the highest limit they have permission for
+permissions:
+  preset-limits:
+    default: 3      # chatcolors.presets.3 (default permission)
+    vip: 5         # chatcolors.presets.5
+    premium: 10    # chatcolors.presets.10 (matches max-presets-per-user)

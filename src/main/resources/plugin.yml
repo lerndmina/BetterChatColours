@@ -1,0 +1,35 @@
+name: BetterChatColours
+version: '${project.version}'
+description: A Paper plugin for chat color gradients with PlaceholderAPI integration
+author: WildDev
+website: https://github.com/Wild/BetterChatColours
+main: com.wilddev.betterchatcolours.BetterChatColours
+api-version: '1.19'
+depend: [PlaceholderAPI]
+
+permissions:
+  chatcolors.use:
+    description: Basic access to plugin features
+    default: true
+  chatcolors.color.use:
+    description: Default fallback for colors without specific permissions
+    default: true
+  chatcolors.presets.3:
+    description: Allows 3 saved presets
+    default: true
+  chatcolors.presets.5:
+    description: Allows 5 saved presets
+    default: false
+  chatcolors.presets.10:
+    description: Allows 10 saved presets
+    default: false
+  chatcolors.admin:
+    description: Administrative commands and overrides
+    default: op
+
+commands:
+  chatcolors:
+    description: Main command for BetterChatColours
+    usage: /<command> [reload|set|clear|presets|delete|addcolor|info]
+    permission: chatcolors.use
+    aliases: [cc, chatcolor, colors]
