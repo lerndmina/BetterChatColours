@@ -78,10 +78,10 @@ public class CommandTabCompleter implements TabCompleter {
 
         if (args.length == 3) {
             String subCommand = args[0].toLowerCase();
-            
+
             if ("admin".equals(subCommand)) {
                 String adminCommand = args[1].toLowerCase();
-                
+
                 switch (adminCommand) {
                     case "force":
                     case "clearforce":
@@ -90,14 +90,14 @@ public class CommandTabCompleter implements TabCompleter {
                                 .map(Player::getName)
                                 .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
                                 .collect(Collectors.toList());
-                                
+
                     case "delete":
                         // Third argument - preset names
                         return plugin.getGlobalPresetManager().getAllPresets().values().stream()
                                 .map(preset -> preset.getName())
                                 .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
                                 .collect(Collectors.toList());
-                                
+
                     case "create":
                         // Third argument - preset name (no completion)
                         break;
@@ -107,10 +107,10 @@ public class CommandTabCompleter implements TabCompleter {
 
         if (args.length == 4) {
             String subCommand = args[0].toLowerCase();
-            
+
             if ("admin".equals(subCommand)) {
                 String adminCommand = args[1].toLowerCase();
-                
+
                 if ("force".equals(adminCommand)) {
                     // Fourth argument - preset names for force command
                     return plugin.getGlobalPresetManager().getAllPresets().values().stream()
@@ -130,7 +130,7 @@ public class CommandTabCompleter implements TabCompleter {
         // For admin create command with 5+ arguments (additional colors)
         if (args.length >= 5) {
             String subCommand = args[0].toLowerCase();
-            
+
             if ("admin".equals(subCommand) && "create".equals(args[1].toLowerCase())) {
                 // Additional hex colors
                 completions.addAll(Arrays.asList("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF"));
@@ -153,9 +153,10 @@ public class CommandTabCompleter implements TabCompleter {
                     Player target = plugin.getServer().getPlayer(playerName);
                     if (target != null) {
                         // Add available global preset names for the target player
-                        completions.addAll(plugin.getGlobalPresetManager().getAvailablePresetsMap(target).values().stream()
-                                .map(preset -> preset.getName())
-                                .collect(Collectors.toList()));
+                        completions
+                                .addAll(plugin.getGlobalPresetManager().getAvailablePresetsMap(target).values().stream()
+                                        .map(preset -> preset.getName())
+                                        .collect(Collectors.toList()));
                     }
 
                     // Add example hex codes for admin create commands
