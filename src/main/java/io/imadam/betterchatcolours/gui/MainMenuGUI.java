@@ -17,7 +17,7 @@ public class MainMenuGUI {
     if (isAdmin) {
       structure = new Structure(
           "# # # # # # # # #",
-          "# s # c # e # # #",
+          "# # s # c # e # #",
           "# # # # # # # # #")
           .addIngredient('#', GUIUtils.createGlassPane())
           .addIngredient('s', new SelectPresetsItem())
@@ -26,7 +26,7 @@ public class MainMenuGUI {
     } else {
       structure = new Structure(
           "# # # # # # # # #",
-          "# # # s # # # # #",
+          "# # # # s # # # #",
           "# # # # # # # # #")
           .addIngredient('#', GUIUtils.createGlassPane())
           .addIngredient('s', new SelectPresetsItem());

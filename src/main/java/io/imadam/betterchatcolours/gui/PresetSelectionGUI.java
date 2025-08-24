@@ -2,8 +2,9 @@ package io.imadam.betterchatcolours.gui;
 
 import io.imadam.betterchatcolours.BetterChatColours;
 import io.imadam.betterchatcolours.data.GlobalPresetData;
+import io.imadam.betterchatcolours.gui.items.BackToMainItem;
+import io.imadam.betterchatcolours.gui.items.CloseMenuItem;
 import io.imadam.betterchatcolours.gui.items.PresetItem;
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.xenondevs.invui.gui.PagedGui;
@@ -19,6 +20,7 @@ public class PresetSelectionGUI {
 
   public static void open(Player player) {
     BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
+    boolean isAdmin = player.hasPermission("betterchatcolours.admin");
 
     // Get available presets for this player
     List<GlobalPresetData> availablePresets = plugin.getGlobalPresetManager()
@@ -39,11 +41,12 @@ public class PresetSelectionGUI {
         "# # # # # # # # #",
         "# x x x x x x x #",
         "# x x x x x x x #",
-        "# # # < # > # # #")
+        "# # # < # > # b #")
         .addIngredient('#', GUIUtils.createGlassPane())
         .addIngredient('x', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
-        .addIngredient('<', GUIUtils.createGlassPane()) // Use glass pane for now
-        .addIngredient('>', GUIUtils.createGlassPane()); // Use glass pane for now
+        .addIngredient('<', GUIUtils.createGlassPane()) // Previous page (handled by InvUI)
+        .addIngredient('>', GUIUtils.createGlassPane()) // Next page (handled by InvUI)
+        .addIngredient('b', isAdmin ? new BackToMainItem() : new CloseMenuItem());
 
     PagedGui<Item> gui = PagedGui.items()
         .setStructure(structure)

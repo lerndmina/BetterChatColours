@@ -13,11 +13,11 @@ public class GUIUtils {
   private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
   public static SimpleItem createGlassPane() {
-    return new SimpleItem(new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE).setDisplayName(""));
+    return new SimpleItem(new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE).setDisplayName(" "));
   }
 
   public static SimpleItem createBorderPane() {
-    return new SimpleItem(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName(""));
+    return new SimpleItem(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName(" "));
   }
 
   public static Component createGradientText(String text, List<String> colors) {

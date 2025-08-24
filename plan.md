@@ -77,14 +77,18 @@ A Paper 1.19.4 plugin that provides chat color gradients through PlaceholderAPI 
 - **Complete InvUI**: All version-specific implementations (r1-r24) included and properly relocated
 - **Server Requirements**: Java 17+ (standard for Paper 1.19.4)
 
-#### GUI Architecture (✅ IMPLEMENTED)
+#### GUI Architecture (✅ COMPLETE - ALL PREVIEWS FIXED)
 
 - **Builder Pattern**: Using `PagedGui.Builder` and `Gui.normal()` builders
-- **Custom Items**: All interactive elements extend AbstractItem
+- **Custom Items**: All interactive elements extend AbstractItem with proper display names
 - **PagedGui System**: Implemented for preset selection and editing
 - **AnvilGUI Integration**: Text input for preset names, colors, permissions
 - **Security**: Complete protection against item theft and duplication
 - **Pure InvUI**: No fallback system - all GUI operations handled by InvUI framework
+- **Centered Layout**: Admin menu icons properly centered for professional appearance
+- **Smart Navigation**: Admin users get back button to main menu, regular users get close button
+- **Fixed Display**: Proper legacy color codes for InvUI compatibility (no raw NBT data)
+- **Working Previews**: All gradient previews working correctly in edit and create GUIs
 
 ### Project Structure (✅ COMPLETE)
 
@@ -347,8 +351,20 @@ public class ColorItem extends AbstractItem {
 4. ✅ **Gradient Editing**: Implemented editing of existing presets (colors, names, permissions)
 5. ✅ **Preset Deletion**: Added ability to delete existing presets with confirmation
 6. ✅ **Enhanced Default Presets**: Added all standard Minecraft colors and premium gradients
-7. 🔄 **Testing & Polish**: Final testing and documentation
-8. 🔄 **Performance Optimization**: Optimize for large numbers of presets
+7. ✅ **GUI Chat Input Fix**: Fixed GUI not closing when requesting chat input for colors
+8. ✅ **Testing & Polish**: All major features tested and working
+9. 🔄 **Performance Optimization**: Optimize for large numbers of presets
+
+## Recent Fixes
+
+### Chat Input GUI Issue (Fixed)
+
+- **Problem**: When clicking "Add Color" or editing colors, the GUI remained open while requesting chat input
+- **Cause**: Chat input methods didn't close the inventory before prompting for input
+- **Solution**: Added `player.closeInventory()` before all chat input requests in:
+  - `AddColorItem.handleClick()` - for adding new colors
+  - `ColorSlotItem.handleClick()` - for editing existing colors
+- **Result**: GUI now properly closes, allowing players to type in chat
 
 ## Key Changes from Previous Approach
 

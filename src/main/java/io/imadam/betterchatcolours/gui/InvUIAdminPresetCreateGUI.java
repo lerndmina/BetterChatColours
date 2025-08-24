@@ -92,13 +92,35 @@ public class InvUIAdminPresetCreateGUI {
                     .setDisplayName("§e§lPreview");
             
             if (!colors.isEmpty()) {
-                Component preview = GUIUtils.createGradientText("Preview: " + presetName, colors);
-                builder.addLoreLines("§7Gradient preview:", preview.toString());
+                String preview = createGradientPreview("Preview: " + presetName, colors);
+                builder.addLoreLines("§7Gradient preview:", preview);
             } else {
                 builder.addLoreLines("§7Add colors to see preview");
             }
             
             return builder;
+        }
+
+        private String createGradientPreview(String text, List<String> colors) {
+            if (colors == null || colors.isEmpty()) {
+                return "§e" + text;
+            }
+
+            try {
+                // Create gradient tag like in GlobalPresetData
+                StringBuilder gradient = new StringBuilder("<gradient:");
+                for (int i = 0; i < colors.size(); i++) {
+                    if (i > 0) gradient.append(":");
+                    gradient.append(colors.get(i));
+                }
+                gradient.append(">");
+                
+                String gradientMessage = gradient.toString() + text + "</gradient>";
+                var component = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(gradientMessage);
+                return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(component);
+            } catch (Exception e) {
+                return "§e" + text;
+            }
         }
 
         @Override
@@ -206,7 +228,8 @@ public class InvUIAdminPresetCreateGUI {
         @Override
         public void handleClick(org.bukkit.event.inventory.ClickType clickType, Player player, org.bukkit.event.inventory.InventoryClickEvent event) {
             if (clickType.isLeftClick()) {
-                // Edit color
+                // Edit color - close GUI first
+                player.closeInventory();
                 ChatInputManager.requestHexColorEdit(player, presetName, colors, index,
                         hexColor -> {
                             colors.set(index, hexColor);

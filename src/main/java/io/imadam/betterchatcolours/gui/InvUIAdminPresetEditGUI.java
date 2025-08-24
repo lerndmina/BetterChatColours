@@ -67,11 +67,11 @@ public class InvUIAdminPresetEditGUI {
 
         @Override
         public ItemProvider getItemProvider() {
-            // Create gradient preview for display name
-            Component displayName = GUIUtils.createGradientText(preset.getName(), preset.getColors());
+            // Create gradient preview for display name using the same method as PresetItem
+            String gradientName = applyGradientToText(preset.getName());
             
             return new ItemBuilder(Material.PAPER)
-                    .setDisplayName(displayName.toString())
+                    .setDisplayName(gradientName)
                     .addLoreLines(
                             "§7Colors: §f" + preset.getColors().size(),
                             "§7Permission: §f" + preset.getPermission(),
@@ -79,6 +79,21 @@ public class InvUIAdminPresetEditGUI {
                             "§eLeft click: §7Edit preset",
                             "§eRight click: §7Delete preset"
                     );
+        }
+
+        private String applyGradientToText(String text) {
+            if (preset.getColors() == null || preset.getColors().isEmpty()) {
+                return "§e§l" + text;
+            }
+
+            try {
+                String gradientMessage = preset.getGradientTag() + text + preset.getClosingTag();
+                var component = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(gradientMessage);
+                return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().serialize(component);
+            } catch (Exception e) {
+                // Fallback to yellow text if gradient parsing fails
+                return "§e§l" + text;
+            }
         }
 
         @Override

@@ -36,6 +36,9 @@ public class AddColorItem extends AbstractItem {
 
   @Override
   public void handleClick(ClickType clickType, Player player, InventoryClickEvent event) {
+    // Close the GUI so player can type in chat
+    player.closeInventory();
+    
     ChatInputManager.requestHexColor(player, presetName, colors,
         hexColor -> {
           colors.add(hexColor);
