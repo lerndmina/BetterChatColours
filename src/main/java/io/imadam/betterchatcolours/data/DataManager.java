@@ -10,457 +10,400 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Central data coordinator for Phase 2 - handles complex data operations
+ * Simplified data coordinator for the new global preset system
+ * Most functionality has been moved to GlobalPresetManager and UserDataManager
  */
 public class DataManager {
 
-  private final BetterChatColours plugin;
-  private final UserDataManager userDataManager;
-  private final ConfigManager configManager;
+    private final BetterChatColours plugin;
+    private final UserDataManager userDataManager;
+    private final GlobalPresetManager globalPresetManager;
 
-  public DataManager(BetterChatColours plugin) {
-    this.plugin = plugin;
-    this.userDataManager = plugin.getUserDataManager();
-    this.configManager = plugin.getConfigManager();
-  }
-
-  /**
-   * Create a new preset with full validation
-   */
-  public CreatePresetResult createPreset(Player player, String presetName, List<String> colors) {
-    // Input validation
-    if (player == null) {
-      plugin.getLogger().warning("Null player provided to createPreset");
-      return new CreatePresetResult(false, "Invalid player", null);
+    public DataManager(BetterChatColours plugin) {
+        this.plugin = plugin;
+        this.userDataManager = plugin.getUserDataManager();
+        this.globalPresetManager = plugin.getGlobalPresetManager();
     }
 
-    if (presetName == null || presetName.trim().isEmpty()) {
-      plugin.getLogger().warning("Invalid preset name provided by player: " + player.getName());
-      return new CreatePresetResult(false, "Preset name cannot be empty", null);
+    // === VALIDATION RESULTS (Legacy compatibility) ===
+    
+    public static class ValidationResult {
+        private final boolean valid;
+        private final String errorMessage;
+
+        public ValidationResult(boolean valid, String errorMessage) {
+            this.valid = valid;
+            this.errorMessage = errorMessage;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public static ValidationResult success() {
+            return new ValidationResult(true, null);
+        }
+
+        public static ValidationResult error(String message) {
+            return new ValidationResult(false, message);
+        }
     }
 
-    if (colors == null || colors.isEmpty()) {
-      plugin.getLogger().warning("Invalid colors list provided by player: " + player.getName());
-      return new CreatePresetResult(false, "At least one color is required", null);
+    // === USER OPERATIONS (Redirected to new system) ===
+
+    public boolean applyPreset(UUID uuid, String presetId) {
+        // Check if preset exists and user has permission
+        Player player = plugin.getServer().getPlayer(uuid);
+        if (player == null) {
+            return false;
+        }
+
+        if (!globalPresetManager.canPlayerUsePreset(player, presetId)) {
+            return false;
+        }
+
+        userDataManager.equipPreset(uuid, presetId);
+        return true;
     }
 
-    if (colors.size() > configManager.getMaxColorsPerGradient()) {
-      plugin.getLogger().warning("Too many colors (" + colors.size() + ") provided by player: " + player.getName());
-      return new CreatePresetResult(false, "Too many colors! Maximum: " + configManager.getMaxColorsPerGradient(),
-          null);
+    public boolean clearActiveGradient(UUID uuid) {
+        userDataManager.clearEquippedPreset(uuid);
+        return true;
     }
 
-    UUID uuid = player.getUniqueId();
-    plugin.getLogger()
-        .info("Creating preset '" + presetName + "' for player " + player.getName() + " with colors: " + colors);
-
-    // Create preset data
-    PresetData preset = new PresetData(presetName, new ArrayList<>(colors));
-
-    // Validate preset
-    ValidationResult validation = userDataManager.validatePreset(uuid, preset);
-    plugin.getLogger().info("Validation result: " + validation.isValid() + " - " + validation.getMessage());
-    if (!validation.isValid()) {
-      return new CreatePresetResult(false, validation.getMessage(), null);
+    public PresetData getActiveGradient(UUID uuid) {
+        return userDataManager.getActiveGradient(uuid);
     }
 
-    // Check player permissions for each color
-    Map<String, ColorData> availableColors = configManager.getAvailableColorsForPlayer(player);
-    plugin.getLogger().info("Available colors for player: " + availableColors.size());
-
-    // Debug: List all available colors
-    availableColors.forEach((name, colorData) -> {
-      plugin.getLogger().info("Available color: " + name + " -> " + colorData.getHexCode());
-    });
-
-    for (String colorHex : colors) {
-      boolean hasPermission = availableColors.values().stream()
-          .anyMatch(colorData -> colorData.getHexCode().equalsIgnoreCase(colorHex));
-
-      plugin.getLogger().info("Checking permission for color " + colorHex + ": " + hasPermission);
-
-      // If player is OP, allow any color
-      if (player.isOp()) {
-        plugin.getLogger().info("Player is OP - allowing color " + colorHex);
-        continue;
-      }
-
-      if (!hasPermission) {
-        return new CreatePresetResult(false, "You don't have permission to use color: " + colorHex, null);
-      }
+    public boolean hasActiveGradient(UUID uuid) {
+        return userDataManager.hasGradient(uuid);
     }
 
-    // Add preset
-    boolean success = userDataManager.addPreset(uuid, preset);
-    plugin.getLogger().info("UserDataManager.addPreset result: " + success);
-    if (!success) {
-      return new CreatePresetResult(false, "A preset with that name already exists", null);
+    // === ADMIN OPERATIONS ===
+
+    public boolean setAdminForcedGradient(UUID uuid, PresetData gradient) {
+        userDataManager.setAdminForcedGradient(uuid, gradient);
+        return true;
     }
 
-    return new CreatePresetResult(true, "Preset created successfully", preset);
-  }
-
-  /**
-   * Create a new preset with NamedTextColor list (convenience method for GUI)
-   */
-  public boolean createPresetFromNamedColors(Player player, String presetName, List<NamedTextColor> namedColors) {
-    List<String> colorStrings = namedColors.stream()
-        .map(NamedTextColor::asHexString)
-        .collect(Collectors.toList());
-
-    CreatePresetResult result = createPreset(player, presetName, colorStrings);
-    return result.isSuccess();
-  }
-
-  /**
-   * Update an existing preset with NamedTextColor list
-   */
-  public boolean updatePresetFromNamedColors(Player player, String presetName, List<NamedTextColor> namedColors) {
-    List<String> colorStrings = namedColors.stream()
-        .map(NamedTextColor::asHexString)
-        .collect(Collectors.toList());
-
-    UUID uuid = player.getUniqueId();
-    PresetData newPreset = new PresetData(presetName, colorStrings);
-
-    // Validate the preset
-    ValidationResult validation = userDataManager.validatePreset(uuid, newPreset);
-    if (!validation.isValid()) {
-      return false;
+    public boolean clearAdminForcedGradient(UUID uuid) {
+        userDataManager.clearAdminForcedGradient(uuid);
+        return true;
     }
 
-    // Check permissions for each color
-    Map<String, ColorData> availableColors = configManager.getAvailableColorsForPlayer(player);
-    for (String colorHex : colorStrings) {
-      // If player is OP, allow any color
-      if (player.isOp()) {
-        continue;
-      }
+    // === STATISTICS (Simplified) ===
 
-      boolean hasPermission = availableColors.values().stream()
-          .anyMatch(colorData -> colorData.getHexCode().equalsIgnoreCase(colorHex));
+    public Map<String, Object> getPluginStats() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // Basic stats that we can still calculate
+        Map<String, GlobalPresetData> allPresets = globalPresetManager.getAllPresets();
+        
+        stats.put("totalGlobalPresets", allPresets.size());
+        stats.put("defaultPresets", allPresets.values().stream().mapToInt(p -> p.isDefault() ? 1 : 0).sum());
+        stats.put("customPresets", allPresets.values().stream().mapToInt(p -> !p.isDefault() ? 1 : 0).sum());
+        
+        return stats;
+    }
 
-      if (!hasPermission) {
+    // === LEGACY METHODS (Disabled/Simplified) ===
+
+    // These methods are from the old user preset system and are no longer supported
+    // They're kept for compilation compatibility but return default values
+
+    public ValidationResult validatePreset(UUID uuid, PresetData preset) {
+        // In the new system, validation is handled by GlobalPresetManager
+        return ValidationResult.success();
+    }
+
+    public boolean addPreset(UUID uuid, PresetData preset) {
+        // Users can no longer create presets directly
         return false;
-      }
     }
 
-    // For now, just delete the old and create new (simple implementation)
-    userDataManager.removePreset(uuid, presetName);
-    return userDataManager.addPreset(uuid, newPreset);
-  }
-
-  /**
-   * Get available colors for GUI display with wool mapping
-   */
-  public List<ColorDisplayData> getAvailableColorsForGUI(Player player) {
-    Map<String, ColorData> colors = configManager.getAvailableColorsForPlayer(player);
-
-    return colors.values().stream()
-        .map(colorData -> new ColorDisplayData(
-            colorData,
-            ColorUtils.getClosestWool(colorData.getHexCode()),
-            ColorUtils.getColorDisplayName(colorData)))
-        .sorted(Comparator.comparing(ColorDisplayData::getDisplayName))
-        .collect(Collectors.toList());
-  }
-
-  /**
-   * Get user dashboard data for GUIs
-   */
-  public UserDashboard getUserDashboard(Player player) {
-    UUID uuid = player.getUniqueId();
-    UserStats stats = userDataManager.getUserStats(uuid);
-    List<PresetData> presets = userDataManager.getPresetsSorted(uuid, true); // Newest first
-    PresetData activeGradient = userDataManager.getActiveGradient(uuid);
-
-    return new UserDashboard(stats, presets, activeGradient);
-  }
-
-  /**
-   * Apply a preset to a player
-   */
-  public boolean applyPreset(Player player, String presetName) {
-    UUID uuid = player.getUniqueId();
-    PresetData preset = userDataManager.findPresetByName(uuid, presetName);
-
-    if (preset == null) {
-      return false;
+    public boolean removePreset(UUID uuid, String presetName) {
+        // Users can no longer remove presets directly  
+        return false;
     }
 
-    // Check if player still has permission for all colors in the preset
-    Map<String, ColorData> availableColors = configManager.getAvailableColorsForPlayer(player);
-    for (String colorHex : preset.getColors()) {
-      // If player is OP, allow any color
-      if (player.isOp()) {
-        continue;
-      }
-
-      boolean hasPermission = availableColors.values().stream()
-          .anyMatch(colorData -> colorData.getHexCode().equalsIgnoreCase(colorHex));
-
-      if (!hasPermission) {
-        return false; // Permission revoked for a color in this preset
-      }
+    public Map<String, PresetData> getUserPresets(UUID uuid) {
+        // Users no longer have individual presets, return empty map
+        return new HashMap<>();
     }
 
-    userDataManager.setActiveGradient(uuid, preset);
-    return true;
-  }
-
-  /**
-   * Search presets by name or colors
-   */
-  public List<PresetData> searchPresets(Player player, String query) {
-    UUID uuid = player.getUniqueId();
-    Map<String, PresetData> allPresets = userDataManager.getUserPresets(uuid);
-
-    if (query == null || query.trim().isEmpty()) {
-      return new ArrayList<>(allPresets.values());
+    public boolean hasPreset(UUID uuid, String presetName) {
+        // Check if global preset exists and user has permission
+        Player player = plugin.getServer().getPlayer(uuid);
+        if (player == null) {
+            return false;
+        }
+        
+        String presetId = findGlobalPresetIdByName(presetName);
+        return presetId != null && globalPresetManager.canPlayerUsePreset(player, presetId);
     }
 
-    String lowerQuery = query.toLowerCase();
-
-    return allPresets.values().stream()
-        .filter(preset -> preset.getName().toLowerCase().contains(lowerQuery) ||
-            preset.getDescription().toLowerCase().contains(lowerQuery) ||
-            preset.getColors().stream().anyMatch(color -> color.toLowerCase().contains(lowerQuery)))
-        .collect(Collectors.toList());
-  }
-
-  /**
-   * Get statistics for admin overview
-   */
-  public SystemStats getSystemStats() {
-    int totalUsers = userDataManager.getUserPresetsMap().size();
-    int totalPresets = userDataManager.getUserPresetsMap().values().stream()
-        .mapToInt(Map::size)
-        .sum();
-    int activeUsers = userDataManager.getActiveGradientsMap().size();
-    int adminForcedUsers = userDataManager.getAdminForcedGradientsMap().size();
-
-    ConfigManager.ColorStats colorStats = configManager.getColorStats();
-
-    return new SystemStats(totalUsers, totalPresets, activeUsers, adminForcedUsers, colorStats);
-  }
-
-  /**
-   * Cleanup and maintenance operations
-   */
-  public MaintenanceResult performMaintenance() {
-    int cleanedUsers = 0;
-    int removedPresets = 0;
-
-    for (UUID uuid : new HashSet<>(userDataManager.getUserPresetsMap().keySet())) {
-      Map<String, PresetData> presets = userDataManager.getUserPresetsMap().get(uuid);
-      if (presets == null)
-        continue;
-
-      int originalSize = presets.size();
-      userDataManager.cleanupUserData(uuid);
-      int newSize = userDataManager.getUserPresetsMap().getOrDefault(uuid, Collections.emptyMap()).size();
-
-      if (newSize < originalSize) {
-        cleanedUsers++;
-        removedPresets += (originalSize - newSize);
-      }
+    public List<GlobalPresetData> getPublishedGlobalPresets() {
+        return globalPresetManager.getAllPresets().values().stream()
+            .filter(preset -> preset.isGlobal() && preset.isPublished())
+            .collect(Collectors.toList());
     }
 
-    return new MaintenanceResult(cleanedUsers, removedPresets);
-  }
+    // === HELPER METHODS ===
 
-  // Result classes for Phase 2 operations
-
-  public static class CreatePresetResult {
-    private final boolean success;
-    private final String message;
-    private final PresetData preset;
-
-    public CreatePresetResult(boolean success, String message, PresetData preset) {
-      this.success = success;
-      this.message = message;
-      this.preset = preset;
+    private String findGlobalPresetIdByName(String name) {
+        return globalPresetManager.getAllPresets().entrySet().stream()
+            .filter(entry -> entry.getValue().getName().equalsIgnoreCase(name))
+            .map(Map.Entry::getKey)
+            .findFirst()
+            .orElse(null);
     }
 
-    public boolean isSuccess() {
-      return success;
+    // === CLEANUP OPERATIONS ===
+
+    public void performMaintenanceCleanup() {
+        // Basic cleanup - most maintenance is now handled by individual managers
+        plugin.getLogger().info("Performing maintenance cleanup...");
+        
+        // Save all data
+        userDataManager.saveAllData();
+        globalPresetManager.saveGlobalPresets();
+        
+        plugin.getLogger().info("Maintenance cleanup completed");
     }
 
-    public String getMessage() {
-      return message;
+    // === UNSUPPORTED LEGACY METHODS ===
+    
+    // These methods are from the old system and are no longer supported
+    // They're included to prevent compilation errors but don't do anything
+
+    public List<PresetData> getPresetsSorted(UUID uuid, boolean newestFirst) {
+        return new ArrayList<>();
     }
 
-    public PresetData getPreset() {
-      return preset;
-    }
-  }
-
-  public static class ColorDisplayData {
-    private final ColorData colorData;
-    private final org.bukkit.Material woolMaterial;
-    private final String displayName;
-
-    public ColorDisplayData(ColorData colorData, org.bukkit.Material woolMaterial, String displayName) {
-      this.colorData = colorData;
-      this.woolMaterial = woolMaterial;
-      this.displayName = displayName;
+    public UserStats getUserStats(UUID uuid) {
+        // Return a basic stats object
+        return new UserStats(uuid, 0, 0, new Date());
     }
 
-    public ColorData getColorData() {
-      return colorData;
+    public PresetData findPresetByName(UUID uuid, String presetName) {
+        return null;
     }
 
-    public org.bukkit.Material getWoolMaterial() {
-      return woolMaterial;
+    public void setActiveGradient(UUID uuid, PresetData preset) {
+        // This is handled by equipPreset now
     }
 
-    public String getDisplayName() {
-      return displayName;
-    }
-  }
-
-  public static class UserDashboard {
-    private final UserStats stats;
-    private final List<PresetData> presets;
-    private final PresetData activeGradient;
-
-    public UserDashboard(UserStats stats, List<PresetData> presets, PresetData activeGradient) {
-      this.stats = stats;
-      this.presets = presets;
-      this.activeGradient = activeGradient;
+    public Map<UUID, Map<String, PresetData>> getUserPresetsMap() {
+        return new HashMap<>();
     }
 
-    public UserStats getStats() {
-      return stats;
+    public Map<UUID, PresetData> getActiveGradientsMap() {
+        return new HashMap<>();
     }
 
-    public List<PresetData> getPresets() {
-      return presets;
+    public Map<UUID, PresetData> getAdminForcedGradientsMap() {
+        return new HashMap<>();
     }
 
-    public PresetData getActiveGradient() {
-      return activeGradient;
-    }
-  }
-
-  public static class SystemStats {
-    private final int totalUsers;
-    private final int totalPresets;
-    private final int activeUsers;
-    private final int adminForcedUsers;
-    private final ConfigManager.ColorStats colorStats;
-
-    public SystemStats(int totalUsers, int totalPresets, int activeUsers, int adminForcedUsers,
-        ConfigManager.ColorStats colorStats) {
-      this.totalUsers = totalUsers;
-      this.totalPresets = totalPresets;
-      this.activeUsers = activeUsers;
-      this.adminForcedUsers = adminForcedUsers;
-      this.colorStats = colorStats;
+    public void cleanupUserData(UUID uuid) {
+        // No user-specific cleanup needed in new system
     }
 
-    public int getTotalUsers() {
-      return totalUsers;
+    public boolean saveGlobalPreset(UUID uuid, GlobalPresetData globalPreset) {
+        return false; // Not supported in simplified system
     }
 
-    public int getTotalPresets() {
-      return totalPresets;
+    public boolean updateGlobalPreset(UUID uuid, GlobalPresetData globalPreset) {
+        return false; // Not supported in simplified system
     }
 
-    public int getActiveUsers() {
-      return activeUsers;
+    public boolean setPresetPublished(String presetName, UUID owner, boolean published) {
+        return false; // Not supported in simplified system
     }
 
-    public int getAdminForcedUsers() {
-      return adminForcedUsers;
+    public boolean setPresetGlobal(String presetName, UUID owner, boolean global) {
+        return false; // Not supported in simplified system
     }
 
-    public ConfigManager.ColorStats getColorStats() {
-      return colorStats;
-    }
-  }
+    // === USER STATS CLASS (Legacy compatibility) ===
+    
+    public static class UserStats {
+        private final UUID uuid;
+        private final int presetCount;
+        private final int activeGradients;
+        private final Date lastActive;
 
-  /**
-   * Save a global preset (new method for GlobalPresetData)
-   */
-  public boolean saveGlobalPreset(Player player, GlobalPresetData globalPreset) {
-    UUID uuid = player.getUniqueId();
+        public UserStats(UUID uuid, int presetCount, int activeGradients, Date lastActive) {
+            this.uuid = uuid;
+            this.presetCount = presetCount;
+            this.activeGradients = activeGradients;
+            this.lastActive = lastActive;
+        }
 
-    // Convert to regular PresetData for validation
-    PresetData presetData = new PresetData(globalPreset.getName(), globalPreset.getColors());
-    ValidationResult validation = userDataManager.validatePreset(uuid, presetData);
-
-    if (!validation.isValid()) {
-      plugin.getLogger().warning("Validation failed for global preset: " + validation.getMessage());
-      return false;
-    }
-
-    // Save the preset with global metadata
-    return userDataManager.saveGlobalPreset(uuid, globalPreset);
-  }
-
-  /**
-   * Update a global preset
-   */
-  public boolean updateGlobalPreset(Player player, GlobalPresetData globalPreset) {
-    UUID uuid = player.getUniqueId();
-
-    // Convert to regular PresetData for validation
-    PresetData presetData = new PresetData(globalPreset.getName(), globalPreset.getColors());
-    ValidationResult validation = userDataManager.validatePreset(uuid, presetData);
-
-    if (!validation.isValid()) {
-      plugin.getLogger().warning("Validation failed for global preset update: " + validation.getMessage());
-      return false;
+        public UUID getUuid() { return uuid; }
+        public int getPresetCount() { return presetCount; }
+        public int getActiveGradients() { return activeGradients; }
+        public Date getLastActive() { return lastActive; }
+        
+        // Additional methods for GUI compatibility
+        public boolean hasActiveGradient() { return activeGradients > 0; }
+        public boolean hasAdminForced() { 
+            // Check if user has admin forced gradient - would need UserDataManager access
+            return false; // For now, simplified
+        }
+        public int getMaxPresets() { 
+            // In global preset system, users don't have preset limits
+            return Integer.MAX_VALUE; 
+        }
     }
 
-    // Update the preset with global metadata
-    return userDataManager.updateGlobalPreset(uuid, globalPreset);
-  }
+    // === USER DASHBOARD CLASS (Legacy compatibility) ===
+    
+    public static class UserDashboard {
+        private final String equippedPreset;
+        private final int availablePresets;
+        private final boolean hasAdminForced;
 
-  /**
-   * Check if player has a preset with given name
-   */
-  public boolean hasPreset(Player player, String presetName) {
-    return userDataManager.hasPreset(player.getUniqueId(), presetName);
-  }
+        public UserDashboard(String equippedPreset, int availablePresets, boolean hasAdminForced) {
+            this.equippedPreset = equippedPreset;
+            this.availablePresets = availablePresets;
+            this.hasAdminForced = hasAdminForced;
+        }
 
-  /**
-   * Get all published global presets
-   */
-  public Map<String, GlobalPresetData> getPublishedGlobalPresets() {
-    return userDataManager.getPublishedGlobalPresets();
-  }
-
-  /**
-   * Admin method to publish/unpublish presets
-   */
-  public boolean setPresetPublished(String presetName, UUID owner, boolean published) {
-    return userDataManager.setPresetPublished(presetName, owner, published);
-  }
-
-  /**
-   * Admin method to make preset global/personal
-   */
-  public boolean setPresetGlobal(String presetName, UUID owner, boolean global) {
-    return userDataManager.setPresetGlobal(presetName, owner, global);
-  }
-
-  public static class MaintenanceResult {
-    private final int cleanedUsers;
-    private final int removedPresets;
-
-    public MaintenanceResult(int cleanedUsers, int removedPresets) {
-      this.cleanedUsers = cleanedUsers;
-      this.removedPresets = removedPresets;
+        public String getEquippedPreset() { return equippedPreset; }
+        public int getAvailablePresets() { return availablePresets; }
+        public boolean hasAdminForced() { return hasAdminForced; }
+        
+        // Legacy methods for MainMenuGUI compatibility
+        public UserStats getStats() {
+            return new UserStats(null, availablePresets, hasAdminForced ? 1 : 0, new Date());
+        }
+        
+        public List<PresetData> getPresets() {
+            // Return empty list - presets are now managed globally
+            return new ArrayList<>();
+        }
+        
+        public PresetData getActiveGradient() {
+            // Return null - active gradients are managed differently now
+            return null;
+        }
     }
 
-    public int getCleanedUsers() {
-      return cleanedUsers;
+    // === CREATE PRESET RESULT CLASS (Legacy compatibility) ===
+    
+    public static class CreatePresetResult {
+        private final boolean success;
+        private final String message;
+        private final PresetData preset;
+
+        public CreatePresetResult(boolean success, String message, PresetData preset) {
+            this.success = success;
+            this.message = message;
+            this.preset = preset;
+        }
+
+        public boolean isSuccess() { return success; }
+        public String getMessage() { return message; }
+        public PresetData getPreset() { return preset; }
+
+        public static CreatePresetResult success(PresetData preset) {
+            return new CreatePresetResult(true, "Preset created successfully", preset);
+        }
+
+        public static CreatePresetResult error(String message) {
+            return new CreatePresetResult(false, message, null);
+        }
     }
 
-    public int getRemovedPresets() {
-      return removedPresets;
+    // === ADDITIONAL LEGACY METHODS ===
+
+    public UserDashboard getUserDashboard(Player player) {
+        String equippedId = userDataManager.getEquippedPreset(player.getUniqueId());
+        String equippedName = "None";
+        
+        if (equippedId != null) {
+            GlobalPresetData preset = globalPresetManager.getPreset(equippedId);
+            if (preset != null) {
+                equippedName = preset.getName();
+            }
+        }
+        
+        int availableCount = globalPresetManager.getAvailablePresets(player).size();
+        boolean hasForced = userDataManager.hasAdminForcedGradient(player.getUniqueId());
+        
+        return new UserDashboard(equippedName, availableCount, hasForced);
     }
-  }
+
+    public CreatePresetResult createPreset(Player player, String presetName, List<String> colors) {
+        // In the new system, users cannot create presets
+        return CreatePresetResult.error("Users cannot create presets. Only admins can create global presets.");
+    }
+
+    public boolean updatePresetFromNamedColors(Player player, String presetName, List<NamedTextColor> namedColors) {
+        // In the new system, users cannot update presets
+        return false;
+    }
+
+    public boolean applyPreset(Player player, String presetName) {
+        // Find preset by name - need to iterate through all presets
+        String presetId = null;
+        GlobalPresetData presetData = null;
+        
+        for (Map.Entry<String, GlobalPresetData> entry : globalPresetManager.getAllPresets().entrySet()) {
+            if (entry.getValue().getName().equals(presetName)) {
+                presetId = entry.getKey();
+                presetData = entry.getValue();
+                break;
+            }
+        }
+        
+        if (presetData == null) {
+            return false;
+        }
+        
+        // Check permission
+        if (!player.hasPermission("betterchatcolours.preset." + presetId) && 
+            !player.hasPermission("betterchatcolours.preset.*")) {
+            return false;
+        }
+        
+        // Equip the preset
+        userDataManager.equipPreset(player.getUniqueId(), presetId);
+        return true;
+    }
+
+    // === ADMIN-ONLY GLOBAL PRESET METHODS ===
+    
+    public boolean saveGlobalPreset(Player player, GlobalPresetData preset) {
+        // In the new system, only admins can create global presets
+        if (!player.hasPermission("betterchatcolours.admin")) {
+            return false;
+        }
+        
+        // Generate a unique preset ID from the name
+        String presetId = preset.getName().toLowerCase().replace(" ", "_");
+        
+        return globalPresetManager.createPreset(
+            presetId,
+            preset.getName(), 
+            preset.getColors(), 
+            preset.getPermission()
+        );
+    }
+
+    public boolean updateGlobalPreset(Player player, GlobalPresetData preset) {
+        // In the new system, only admins can update global presets
+        if (!player.hasPermission("betterchatcolours.admin")) {
+            return false;
+        }
+        
+        // For updating, we'd need to add an update method to GlobalPresetManager
+        // For now, return false as updates aren't implemented
+        return false;
+    }
 }

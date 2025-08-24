@@ -15,6 +15,7 @@ public class GlobalPresetData extends PresetData {
   private String permission;
   private boolean isPublished;
   private long lastModified;
+  private boolean isDefault;
 
   public GlobalPresetData(String name, List<String> colors) {
     super(name, colors);
@@ -23,6 +24,7 @@ public class GlobalPresetData extends PresetData {
     this.permission = generateDefaultPermission(name);
     this.isPublished = false;
     this.lastModified = getCreatedTime();
+    this.isDefault = false;
   }
 
   public GlobalPresetData(String name, List<String> colors, UUID owner) {
@@ -32,6 +34,18 @@ public class GlobalPresetData extends PresetData {
     this.permission = generateDefaultPermission(name);
     this.isPublished = false;
     this.lastModified = getCreatedTime();
+    this.isDefault = false;
+  }
+
+  // New constructor for global presets with permission and default flag
+  public GlobalPresetData(String name, List<String> colors, String permission, long createdTime, boolean isDefault) {
+    super(name, colors, createdTime);
+    this.owner = null;
+    this.isGlobal = true;
+    this.permission = permission != null ? permission : generateDefaultPermission(name);
+    this.isPublished = true;
+    this.lastModified = createdTime;
+    this.isDefault = isDefault;
   }
 
   public GlobalPresetData(String name, List<String> colors, UUID owner, boolean isGlobal, String permission,
@@ -42,6 +56,7 @@ public class GlobalPresetData extends PresetData {
     this.permission = permission != null ? permission : generateDefaultPermission(name);
     this.isPublished = isPublished;
     this.lastModified = getCreatedTime();
+    this.isDefault = false;
   }
 
   // Full constructor for deserialization
@@ -53,6 +68,7 @@ public class GlobalPresetData extends PresetData {
     this.permission = permission != null ? permission : generateDefaultPermission(name);
     this.isPublished = isPublished;
     this.lastModified = lastModified;
+    this.isDefault = false;
   }
 
   private String generateDefaultPermission(String name) {
@@ -72,12 +88,20 @@ public class GlobalPresetData extends PresetData {
     return permission;
   }
 
+  public String getRequiredPermission() {
+    return permission;
+  }
+
   public boolean isPublished() {
     return isPublished;
   }
 
   public long getLastModified() {
     return lastModified;
+  }
+
+  public boolean isDefault() {
+    return isDefault;
   }
 
   // Setters
@@ -98,6 +122,11 @@ public class GlobalPresetData extends PresetData {
 
   public void setPublished(boolean published) {
     this.isPublished = published;
+    updateLastModified();
+  }
+
+  public void setDefault(boolean isDefault) {
+    this.isDefault = isDefault;
     updateLastModified();
   }
 
@@ -153,13 +182,15 @@ public class GlobalPresetData extends PresetData {
    * Create a copy as a GlobalPresetData
    */
   public GlobalPresetData copyAsGlobal(String newName) {
-    return new GlobalPresetData(
+    GlobalPresetData copy = new GlobalPresetData(
         newName,
         new java.util.ArrayList<>(getColors()),
         owner,
         isGlobal,
         permission,
         isPublished);
+    copy.isDefault = this.isDefault;
+    return copy;
   }
 
   @Override
@@ -188,6 +219,7 @@ public class GlobalPresetData extends PresetData {
         ", isGlobal=" + isGlobal +
         ", permission='" + permission + '\'' +
         ", isPublished=" + isPublished +
+        ", isDefault=" + isDefault +
         ", createdTime=" + getCreatedTime() +
         ", lastModified=" + lastModified +
         '}';

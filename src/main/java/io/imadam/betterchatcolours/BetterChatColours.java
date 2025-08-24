@@ -5,6 +5,7 @@ import io.imadam.betterchatcolours.commands.CommandTabCompleter;
 import io.imadam.betterchatcolours.config.ConfigManager;
 import io.imadam.betterchatcolours.config.MessagesConfig;
 import io.imadam.betterchatcolours.data.DataManager;
+import io.imadam.betterchatcolours.data.GlobalPresetManager;
 import io.imadam.betterchatcolours.data.UserDataManager;
 import io.imadam.betterchatcolours.gui.GUIListener;
 import io.imadam.betterchatcolours.placeholders.ChatColorsExpansion;
@@ -20,6 +21,7 @@ public final class BetterChatColours extends JavaPlugin {
     private ConfigManager configManager;
     private MessagesConfig messagesConfig;
     private UserDataManager userDataManager;
+    private GlobalPresetManager globalPresetManager;
     private DataManager dataManager;
     private ChatColorsExpansion placeholderExpansion;
     private GUIListener guiListener;
@@ -37,6 +39,7 @@ public final class BetterChatColours extends JavaPlugin {
 
             // Initialize data manager
             userDataManager = new UserDataManager(this);
+            globalPresetManager = new GlobalPresetManager(this);
             dataManager = new DataManager(this);
 
             // Initialize performance monitoring
@@ -115,6 +118,10 @@ public final class BetterChatColours extends JavaPlugin {
 
     public UserDataManager getUserDataManager() {
         return userDataManager;
+    }
+
+    public GlobalPresetManager getGlobalPresetManager() {
+        return globalPresetManager;
     }
 
     public DataManager getDataManager() {

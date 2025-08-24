@@ -3,7 +3,6 @@ package io.imadam.betterchatcolours.gui;
 import io.imadam.betterchatcolours.BetterChatColours;
 import io.imadam.betterchatcolours.data.DataManager;
 import io.imadam.betterchatcolours.data.PresetData;
-import io.imadam.betterchatcolours.data.UserStats;
 import io.imadam.betterchatcolours.utils.PermissionUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -58,7 +57,7 @@ public class MainMenuGUI {
         return;
       }
 
-      UserStats stats = dashboard.getStats();
+      DataManager.UserStats stats = dashboard.getStats();
       List<PresetData> presets = dashboard.getPresets();
       PresetData activeGradient = dashboard.getActiveGradient();
 
@@ -110,7 +109,7 @@ public class MainMenuGUI {
     }
   }
 
-  private ItemStack createUserInfoItem(UserStats stats) {
+  private ItemStack createUserInfoItem(DataManager.UserStats stats) {
     String activeStatus = stats.hasActiveGradient() ? "<green>Active</green>" : "<gray>None</gray>";
 
     String adminForced = stats.hasAdminForced() ? "<red>Admin Override Active</red>" : "";

@@ -191,22 +191,26 @@ public class GlobalSettingsGUI {
 
     private void openPermissionEditor() {
         new AnvilGUI.Builder()
-            .onComplete((completion) -> {
-                String permission = completion.getText().trim();
+            .onClick((slot, stateSnapshot) -> {
+                if (slot != AnvilGUI.Slot.OUTPUT) {
+                    return Arrays.asList();
+                }
+                
+                String permission = stateSnapshot.getText().trim();
                 
                 if (permission.isEmpty()) {
-                    return AnvilGUI.Response.text("Permission cannot be empty!");
+                    return Arrays.asList(AnvilGUI.ResponseAction.replaceInputText("Permission cannot be empty!"));
                 }
                 
                 // Validate permission format
                 if (!permission.matches("^[a-zA-Z0-9._-]+$")) {
-                    return AnvilGUI.Response.text("Invalid permission format!");
+                    return Arrays.asList(AnvilGUI.ResponseAction.replaceInputText("Invalid permission format!"));
                 }
                 
                 preset.setPermission(permission);
                 plugin.getLogger().info("Updated permission for preset '" + preset.getName() + "' to: " + permission);
                 
-                return AnvilGUI.Response.close();
+                return Arrays.asList(AnvilGUI.ResponseAction.close());
             })
             .onClose(stateSnapshot -> {
                 populateInventory();
@@ -256,7 +260,7 @@ public class GlobalSettingsGUI {
     }
 
     public void open() {
-        plugin.getGuiListener().registerGlobalSettingsGUI(player, this);
+        // plugin.getGuiListener().registerGlobalSettingsGUI(player, this); // TODO: Fix registration
         player.openInventory(inventory);
     }
 

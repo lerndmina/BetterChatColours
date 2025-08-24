@@ -1,66 +1,73 @@
 # BetterChatColours Configuration
 # A Paper plugin for chat color gradients with PlaceholderAPI integration
 
-# Color palette available to users
+# Color palette - these will be converted to default global presets
+# Users can only equip presets, not create them. Preset creation is admin-only.
 colours:
   red:
     colour: "#FF0000"
     displayname: "Red"
-    # permission: "chatcolors.color.red"  # Optional, uses chatcolors.color.use by default
+    permission: "chatcolors.preset.red"  # Default preset permission
   
   green:
     colour: "#00FF00"
     displayname: "Green"
+    permission: "chatcolors.preset.green"
   
   blue:
     colour: "#0000FF"
     displayname: "Blue"
+    permission: "chatcolors.preset.blue"
   
   yellow:
     colour: "#FFFF00"
     displayname: "Yellow"
+    permission: "chatcolors.preset.yellow"
   
   purple:
     colour: "#800080"
     displayname: "Purple"
-    permission: "chatcolors.color.vip"  # Requires special permission
+    permission: "chatcolors.preset.vip"  # VIP permission required
   
   orange:
     colour: "#FFA500"
     displayname: "Orange"
+    permission: "chatcolors.preset.orange"
   
   pink:
     colour: "#FFC0CB"
     displayname: "Pink"
+    permission: "chatcolors.preset.pink"
   
   cyan:
     colour: "#00FFFF"
     displayname: "Cyan"
+    permission: "chatcolors.preset.cyan"
   
   gold:
     colour: "#FFD700"
     displayname: "Gold"
-    permission: "chatcolors.color.premium"  # Premium color
+    permission: "chatcolors.preset.premium"  # Premium permission required
   
   lime:
     colour: "#32CD32"
     displayname: "Lime"
+    permission: "chatcolors.preset.lime"
   
   magenta:
     colour: "#FF00FF"
     displayname: "Magenta"
+    permission: "chatcolors.preset.magenta"
   
   aqua:
     colour: "#00CED1"
     displayname: "Aqua"
+    permission: "chatcolors.preset.aqua"
 
 # Plugin settings
 settings:
-  # Maximum number of colors allowed in a single gradient
+  # Maximum number of colors allowed in a single gradient (for admin-created presets)
   max-colors-per-gradient: 5
-  
-  # Maximum number of presets any user can have (hard cap)
-  max-presets-per-user: 10
   
   # GUI inventory size (must be multiple of 9, recommended: 27, 36, 45, 54)
   gui-size: 54
@@ -74,10 +81,18 @@ settings:
   # Whether to preserve text formatting (bold, italic, etc.) when processing messages
   preserve-formatting: true
 
-# Permission-based preset limits
-# Users will get the highest limit they have permission for
+# Default permissions for global presets
+# All default color presets will use these permissions unless overridden above
 permissions:
-  preset-limits:
-    default: 3      # chatcolors.presets.3 (default permission)
-    vip: 5         # chatcolors.presets.5
-    premium: 10    # chatcolors.presets.10 (matches max-presets-per-user)
+  # Basic preset access - all users should have this by default
+  default-preset: "chatcolors.preset.use"
+  
+  # Admin permissions
+  admin:
+    create-preset: "chatcolors.admin.create"
+    delete-preset: "chatcolors.admin.delete"
+    force-gradient: "chatcolors.admin.force"
+    
+  # Special tiers
+  vip-presets: "chatcolors.preset.vip"
+  premium-presets: "chatcolors.preset.premium"

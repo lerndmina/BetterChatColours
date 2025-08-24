@@ -24,9 +24,8 @@ public class CommandTabCompleter implements TabCompleter {
         List<String> completions = new ArrayList<>();
 
         if (args.length == 1) {
-            // First argument - subcommands
-            List<String> subCommands = Arrays.asList("help", "list", "apply", "clear", "reload", "set", "adminclear",
-                    "presets", "delete", "addcolor", "info", "stats", "publish", "unpublish");
+            // First argument - subcommands for new system
+            List<String> subCommands = Arrays.asList("help", "list", "equip", "clear", "reload", "admin");
 
             return subCommands.stream()
                     .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
@@ -37,12 +36,23 @@ public class CommandTabCompleter implements TabCompleter {
             String subCommand = args[0].toLowerCase();
 
             switch (subCommand) {
-                case "apply":
-                    // Second argument - player's own preset names
+                case "equip":
+                    // Second argument - available global preset names for the player
                     if (sender instanceof Player) {
                         Player player = (Player) sender;
-                        return plugin.getUserDataManager().getUserPresets(player.getUniqueId()).keySet().stream()
+                        return plugin.getGlobalPresetManager().getAvailablePresetsMap(player).values().stream()
+                                .map(preset -> preset.getName())
                                 .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    break;
+
+                case "admin":
+                    // Second argument - admin subcommands
+                    if (sender.hasPermission("chatcolors.admin")) {
+                        List<String> adminCommands = Arrays.asList("create", "delete", "force", "clearforce");
+                        return adminCommands.stream()
+                                .filter(cmd -> cmd.startsWith(args[1].toLowerCase()))
                                 .collect(Collectors.toList());
                     }
                     break;
@@ -68,40 +78,101 @@ public class CommandTabCompleter implements TabCompleter {
 
         if (args.length == 3) {
             String subCommand = args[0].toLowerCase();
+            
+            if ("admin".equals(subCommand)) {
+                String adminCommand = args[1].toLowerCase();
+                
+                switch (adminCommand) {
+                    case "force":
+                    case "clearforce":
+                        // Third argument - player names
+                        return plugin.getServer().getOnlinePlayers().stream()
+                                .map(Player::getName)
+                                .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
+                                .collect(Collectors.toList());
+                                
+                    case "delete":
+                        // Third argument - preset names
+                        return plugin.getGlobalPresetManager().getAllPresets().values().stream()
+                                .map(preset -> preset.getName())
+                                .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
+                                .collect(Collectors.toList());
+                                
+                    case "create":
+                        // Third argument - preset name (no completion)
+                        break;
+                }
+            }
+        }
+
+        if (args.length == 4) {
+            String subCommand = args[0].toLowerCase();
+            
+            if ("admin".equals(subCommand)) {
+                String adminCommand = args[1].toLowerCase();
+                
+                if ("force".equals(adminCommand)) {
+                    // Fourth argument - preset names for force command
+                    return plugin.getGlobalPresetManager().getAllPresets().values().stream()
+                            .map(preset -> preset.getName())
+                            .filter(name -> name.toLowerCase().startsWith(args[3].toLowerCase()))
+                            .collect(Collectors.toList());
+                } else if ("create".equals(adminCommand)) {
+                    // Fourth argument and beyond - hex colors
+                    completions.addAll(Arrays.asList("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF"));
+                    return completions.stream()
+                            .filter(completion -> completion.toLowerCase().startsWith(args[3].toLowerCase()))
+                            .collect(Collectors.toList());
+                }
+            }
+        }
+
+        // For admin create command with 5+ arguments (additional colors)
+        if (args.length >= 5) {
+            String subCommand = args[0].toLowerCase();
+            
+            if ("admin".equals(subCommand) && "create".equals(args[1].toLowerCase())) {
+                // Additional hex colors
+                completions.addAll(Arrays.asList("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF"));
+                String currentArg = args[args.length - 1];
+                return completions.stream()
+                        .filter(completion -> completion.toLowerCase().startsWith(currentArg.toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+        }
+
+        // Legacy 3-argument handling (keep for backwards compatibility)
+        if (args.length == 3) {
+            String subCommand = args[0].toLowerCase();
 
             switch (subCommand) {
                 case "set":
-                    // Third argument - preset names or hex codes
+                case "force":
+                    // Third argument - global preset names
                     String playerName = args[1];
                     Player target = plugin.getServer().getPlayer(playerName);
                     if (target != null) {
-                        // Add user's preset names
-                        completions.addAll(plugin.getUserDataManager().getUserPresets(target.getUniqueId()).keySet());
+                        // Add available global preset names for the target player
+                        completions.addAll(plugin.getGlobalPresetManager().getAvailablePresetsMap(target).values().stream()
+                                .map(preset -> preset.getName())
+                                .collect(Collectors.toList()));
                     }
 
-                    // Add example hex codes
+                    // Add example hex codes for admin create commands
                     completions.addAll(Arrays.asList("#FF0000", "#00FF00", "#0000FF"));
                     break;
 
                 case "delete":
-                    // Third argument - preset names
-                    String targetName = args[1];
-                    Player deleteTarget = plugin.getServer().getPlayer(targetName);
-                    if (deleteTarget != null) {
-                        completions.addAll(
-                                plugin.getUserDataManager().getUserPresets(deleteTarget.getUniqueId()).keySet());
-                    }
+                    // Third argument - all global preset names (admin can delete any)
+                    completions.addAll(plugin.getGlobalPresetManager().getAllPresets().values().stream()
+                            .map(preset -> preset.getName())
+                            .collect(Collectors.toList()));
                     break;
 
                 case "publish":
                 case "unpublish":
-                    // Third argument - preset names
-                    String publishPlayerName = args[1];
-                    Player publishTarget = plugin.getServer().getPlayer(publishPlayerName);
-                    if (publishTarget != null) {
-                        completions.addAll(
-                                plugin.getUserDataManager().getUserPresets(publishTarget.getUniqueId()).keySet());
-                    }
+                    // These commands are no longer used in the new system
+                    // Global presets are managed differently now
                     break;
 
                 case "addcolor":
