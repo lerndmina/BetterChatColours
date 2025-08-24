@@ -24,7 +24,8 @@ public class FallbackGUIListener implements Listener {
     String title = event.getView().getTitle();
 
     // Prevent taking items from our GUIs
-    if (title.startsWith("Chat Colors") || title.equals("Available Presets") || title.startsWith("Create New Preset")) {
+    if (title.startsWith("Chat Colors") || title.equals("Available Presets") ||
+        title.startsWith("Create New Preset") || title.startsWith("Edit Preset") || title.startsWith("Edit Presets")) {
       event.setCancelled(true);
 
       if (event.getCurrentItem() == null)
@@ -34,8 +35,10 @@ public class FallbackGUIListener implements Listener {
         handleMainMenuClick(player, event);
       } else if (title.equals("Available Presets")) {
         handlePresetSelectionClick(player, event);
-      } else if (title.startsWith("Create New Preset")) {
+      } else if (title.startsWith("Create New Preset") || title.startsWith("Edit Preset")) {
         handleAdminCreateClick(player, event);
+      } else if (title.startsWith("Edit Presets")) {
+        handleAdminEditClick(player, event);
       }
     }
   }
@@ -69,7 +72,7 @@ public class FallbackGUIListener implements Listener {
           return;
         }
         player.closeInventory();
-        player.sendMessage(Component.text("Preset editing coming soon!", NamedTextColor.YELLOW));
+        AdminPresetEditGUI.open(player);
       }
     }
   }
@@ -137,8 +140,27 @@ public class FallbackGUIListener implements Listener {
         openColorInput(player, presetName, getCurrentColors(event.getInventory()));
       }
       case "Set Permission" -> {
-        player.closeInventory();
-        openPermissionInput(player, presetName, getCurrentColors(event.getInventory()));
+        List<String> colors = getCurrentColors(event.getInventory());
+        if (colors.isEmpty()) {
+          player.sendMessage(Component.text("Cannot save preset without colors!", NamedTextColor.RED));
+          return;
+        }
+
+        BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
+        String inventoryTitle = event.getView().getTitle();
+        boolean editMode = isEditMode(inventoryTitle);
+        
+        plugin.getGlobalPresetManager().addPreset(presetName, colors);
+        String permission = "chatcolor.preset." + presetName.toLowerCase();
+        
+        String action = editMode ? "updated" : "created";
+        player.sendMessage(Component.text("Preset '" + presetName + "' " + action + " successfully! Permission: " + permission, NamedTextColor.GREEN));
+        
+        if (editMode) {
+          AdminPresetEditGUI.open(player);
+        } else {
+          player.closeInventory();
+        }
       }
       case "Save Preset" -> {
         List<String> colors = getCurrentColors(event.getInventory());
@@ -148,8 +170,9 @@ public class FallbackGUIListener implements Listener {
         }
 
         BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
-        plugin.getGlobalPresetManager().addPreset(presetName, colors, "");
-        player.sendMessage(Component.text("Preset '" + presetName + "' created successfully!", NamedTextColor.GREEN));
+        plugin.getGlobalPresetManager().addPreset(presetName, colors);
+        String permission = "chatcolor.preset." + presetName.toLowerCase();
+        player.sendMessage(Component.text("Preset '" + presetName + "' created successfully! Permission: " + permission, NamedTextColor.GREEN));
         player.closeInventory();
       }
       case "Cancel" -> {
@@ -201,31 +224,6 @@ public class FallbackGUIListener implements Listener {
         () -> AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, colors));
   }
 
-  private void openPermissionInput(Player player, String presetName, List<String> colors) {
-    ChatInputManager.requestPermission(player, presetName, colors,
-        permission -> {
-          BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
-
-          if (!colors.isEmpty()) {
-            plugin.getGlobalPresetManager().addPreset(presetName, colors, permission);
-            if (permission.isEmpty()) {
-              player.sendMessage(
-                  Component.text("[SUCCESS] Preset '" + presetName + "' created successfully! (No permission required)",
-                      NamedTextColor.GREEN));
-            } else {
-              player.sendMessage(
-                  Component.text("[SUCCESS] Preset '" + presetName + "' created with permission: " + permission,
-                      NamedTextColor.GREEN));
-            }
-            FallbackMainMenuGUI.open(player);
-          } else {
-            player.sendMessage(Component.text("[ERROR] Cannot save preset without colors!", NamedTextColor.RED));
-            AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, colors);
-          }
-        },
-        () -> AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, colors));
-  }
-
   private List<String> getCurrentColors(org.bukkit.inventory.Inventory inventory) {
     List<String> colors = new ArrayList<>();
     for (int i = 0; i < inventory.getSize() - 9; i++) { // Exclude bottom row
@@ -245,6 +243,121 @@ public class FallbackGUIListener implements Listener {
       }
     }
     return colors;
+  }
+
+  private void handleAdminEditClick(Player player, InventoryClickEvent event) {
+    if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta())
+      return;
+
+    ItemMeta meta = event.getCurrentItem().getItemMeta();
+    Component displayName = meta.displayName();
+    if (displayName == null)
+      return;
+
+    // Handle navigation buttons
+    String displayText = ((net.kyori.adventure.text.TextComponent) displayName).content();
+
+    switch (displayText) {
+      case "Previous Page" -> {
+        // Extract page info from title
+        String title = event.getView().getTitle();
+        if (title.contains("(Page ")) {
+          int currentPage = extractPageNumber(title);
+          if (currentPage > 1) {
+            reopenEditPageWithOffset(player, -1);
+          }
+        }
+      }
+      case "Next Page" -> {
+        String title = event.getView().getTitle();
+        if (title.contains("(Page ")) {
+          reopenEditPageWithOffset(player, 1);
+        }
+      }
+      case "Back to Main Menu" -> {
+        player.closeInventory();
+        FallbackMainMenuGUI.open(player);
+      }
+      default -> {
+        // This is a preset item - check for left/right click
+        String presetName = extractPresetName(meta);
+        if (presetName != null) {
+          if (event.isLeftClick()) {
+            // Edit the preset
+            player.closeInventory();
+            AdminPresetEditGUI.openEditInterface(player, presetName);
+          } else if (event.isRightClick()) {
+            // Delete the preset
+            deletePreset(player, presetName);
+          }
+        }
+      }
+    }
+  }
+
+  private int extractPageNumber(String title) {
+    try {
+      int pageStart = title.indexOf("(Page ") + 6;
+      int pageEnd = title.indexOf("/", pageStart);
+      return Integer.parseInt(title.substring(pageStart, pageEnd));
+    } catch (Exception e) {
+      return 1;
+    }
+  }
+
+  private void reopenEditPageWithOffset(Player player, int offset) {
+    player.closeInventory();
+    // For now, just reopen the main edit GUI
+    // TODO: Implement proper page tracking
+    AdminPresetEditGUI.open(player);
+  }
+
+  private String extractPresetName(ItemMeta meta) {
+    if (meta.lore() == null)
+      return null;
+
+    for (Component loreComponent : meta.lore()) {
+      String loreText = ((net.kyori.adventure.text.TextComponent) loreComponent).content();
+      if (loreText.startsWith("__PRESET_NAME__")) {
+        return loreText.substring("__PRESET_NAME__".length());
+      }
+    }
+    return null;
+  }
+
+  private boolean isEditMode(String title) {
+    return title.startsWith("Edit Preset:");
+  }
+
+  private void deletePreset(Player player, String presetName) {
+    BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
+
+    // Confirm deletion via chat
+    ChatInputManager.requestPresetName(player,
+        input -> {
+          if (input.equalsIgnoreCase(presetName)) {
+            // Delete confirmed
+            plugin.getGlobalPresetManager().removePreset(presetName);
+            player.sendMessage(
+                Component.text("[SUCCESS] Preset '" + presetName + "' deleted successfully!", NamedTextColor.GREEN));
+            AdminPresetEditGUI.open(player);
+          } else {
+            player.sendMessage(Component.text("[ERROR] Confirmation failed. Type the exact preset name to delete.",
+                NamedTextColor.RED));
+            AdminPresetEditGUI.open(player);
+          }
+        },
+        () -> {
+          player.sendMessage(Component.text("[CANCELLED] Preset deletion cancelled.", NamedTextColor.YELLOW));
+          AdminPresetEditGUI.open(player);
+        });
+
+    player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+    player.sendMessage(Component.text("[DELETE] Type the preset name to confirm deletion:", NamedTextColor.RED));
+    player.sendMessage(Component.text("   • Preset to delete: " + presetName, NamedTextColor.GRAY));
+    player.sendMessage(Component.text("   • Type '" + presetName + "' to confirm", NamedTextColor.GRAY));
+    player.sendMessage(Component.text("   • Type 'cancel' to abort", NamedTextColor.GRAY));
+    player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
   }
 
   private String extractColorIndex(ItemMeta meta) {

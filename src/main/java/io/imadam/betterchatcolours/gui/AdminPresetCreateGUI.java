@@ -26,9 +26,18 @@ public class AdminPresetCreateGUI {
   }
 
   public static void openColorSelectionGUI(Player player, String presetName, List<String> colors) {
+    openColorSelectionGUI(player, presetName, colors, false);
+  }
+
+  public static void openColorSelectionGUIForEdit(Player player, String presetName, List<String> colors) {
+    openColorSelectionGUI(player, presetName, colors, true);
+  }
+
+  private static void openColorSelectionGUI(Player player, String presetName, List<String> colors, boolean isEditMode) {
     // Create inventory with dynamic size based on number of colors
     int inventorySize = Math.max(54, ((colors.size() + 8) / 9) * 9);
-    Inventory inv = Bukkit.createInventory(null, inventorySize, Component.text(TITLE + ": " + presetName));
+    String title = (isEditMode ? "Edit Preset" : TITLE) + ": " + presetName;
+    Inventory inv = Bukkit.createInventory(null, inventorySize, Component.text(title));
 
     // Fill with glass panes
     ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
