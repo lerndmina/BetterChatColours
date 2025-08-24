@@ -45,7 +45,7 @@ public class PresetSelectionGUI {
   }
 
   private void createInventory() {
-    String title = "§6§lChat Color Presets";
+    String title = "<gold><bold>Chat Color Presets</bold></gold>";
     this.inventory = GUIUtils.createInventory(player, 54, title);
   }
 

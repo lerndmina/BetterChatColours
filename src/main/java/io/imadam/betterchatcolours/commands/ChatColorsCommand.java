@@ -5,22 +5,24 @@ import io.imadam.betterchatcolours.data.GlobalPresetData;
 import io.imadam.betterchatcolours.data.GlobalPresetManager;
 import io.imadam.betterchatcolours.data.PresetData;
 import io.imadam.betterchatcolours.data.UserDataManager;
+import io.imadam.betterchatcolours.gui.GlobalPresetSettingsGUI;
 import io.imadam.betterchatcolours.gui.PresetSelectionGUI;
 import io.imadam.betterchatcolours.utils.ColorUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Redesigned command system for global preset management
@@ -31,8 +33,6 @@ public class ChatColorsCommand implements CommandExecutor {
     private final BetterChatColours plugin;
     private final UserDataManager userDataManager;
     private final GlobalPresetManager globalPresetManager;
-    private final Pattern hexPattern = Pattern.compile("^#[0-9A-Fa-f]{6}$");
-    private final Pattern presetNamePattern = Pattern.compile("^[a-zA-Z0-9 _-]{1,32}$");
 
     public ChatColorsCommand(BetterChatColours plugin) {
         this.plugin = plugin;
@@ -56,7 +56,9 @@ public class ChatColorsCommand implements CommandExecutor {
                 new PresetSelectionGUI(plugin, player).openGUI();
                 return true;
             } else {
-                sender.sendMessage("§cThis command can only be used by players when no arguments are provided.");
+                Component message = MiniMessage.miniMessage().deserialize(
+                        "<red>This command can only be used by players when no arguments are provided.</red>");
+                sender.sendMessage(message);
                 return true;
             }
         }
@@ -86,7 +88,9 @@ public class ChatColorsCommand implements CommandExecutor {
 
     private boolean handleListCommand(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players.");
+            Component message = MiniMessage.miniMessage()
+                    .deserialize("<red>This command can only be used by players.</red>");
+            sender.sendMessage(message);
             return true;
         }
 
@@ -106,11 +110,11 @@ public class ChatColorsCommand implements CommandExecutor {
             String presetId = entry.getKey();
             GlobalPresetData preset = entry.getValue();
 
-            String status = presetId.equals(currentlyEquipped) ? " §a(equipped)" : "";
+            String status = presetId.equals(currentlyEquipped) ? " <green>(equipped)</green>" : "";
 
             try {
                 String previewText = ColorUtils.createGradientPreview(preset.getColors(), preset.getName());
-                Component message = MiniMessage.miniMessage().deserialize("§7- " + previewText + status);
+                Component message = MiniMessage.miniMessage().deserialize("<gray>- </gray>" + previewText + status);
                 player.sendMessage(message);
             } catch (Exception e) {
                 player.sendMessage(Component.text("- " + preset.getName() + status).color(NamedTextColor.GRAY));
@@ -122,7 +126,9 @@ public class ChatColorsCommand implements CommandExecutor {
 
     private boolean handleEquipCommand(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players.");
+            Component message = MiniMessage.miniMessage()
+                    .deserialize("<red>This command can only be used by players.</red>");
+            sender.sendMessage(message);
             return true;
         }
 
@@ -165,7 +171,9 @@ public class ChatColorsCommand implements CommandExecutor {
 
     private boolean handleClearCommand(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("§cThis command can only be used by players.");
+            Component message = MiniMessage.miniMessage()
+                    .deserialize("<red>This command can only be used by players.</red>");
+            sender.sendMessage(message);
             return true;
         }
 
@@ -184,7 +192,7 @@ public class ChatColorsCommand implements CommandExecutor {
 
         if (args.length < 2) {
             sender.sendMessage(Component.text("Admin commands:").color(NamedTextColor.YELLOW));
-            sender.sendMessage(Component.text("/chatcolors admin create <name> <color1> [color2] [color3]...")
+            sender.sendMessage(Component.text("/chatcolors admin create - Open preset creation GUI")
                     .color(NamedTextColor.GRAY));
             sender.sendMessage(Component.text("/chatcolors admin delete <name>").color(NamedTextColor.GRAY));
             sender.sendMessage(Component.text("/chatcolors admin force <player> <preset>").color(NamedTextColor.GRAY));
@@ -210,65 +218,62 @@ public class ChatColorsCommand implements CommandExecutor {
     }
 
     private boolean handleAdminCreateCommand(CommandSender sender, String[] args) {
-        if (args.length < 4) {
-            sender.sendMessage(Component.text("Usage: /chatcolors admin create <name> <color1> [color2] [color3]...")
-                    .color(NamedTextColor.RED));
-            sender.sendMessage(Component.text("Example: /chatcolors admin create Ocean #00BFFF #1E90FF #0000FF")
-                    .color(NamedTextColor.GRAY));
+        if (!(sender instanceof Player)) {
+            Component message = MiniMessage.miniMessage()
+                    .deserialize("<red>This command can only be used by players.</red>");
+            sender.sendMessage(message);
             return true;
         }
 
-        String presetName = args[2];
-        if (!presetNamePattern.matcher(presetName).matches()) {
-            sender.sendMessage(Component.text(
-                    "Invalid preset name. Use only letters, numbers, spaces, hyphens, and underscores (max 32 chars).")
-                    .color(NamedTextColor.RED));
-            return true;
-        }
+        Player player = (Player) sender;
 
-        List<String> colors = new ArrayList<>();
-        for (int i = 3; i < args.length; i++) {
-            String color = args[i];
-            if (!hexPattern.matcher(color).matches()) {
-                sender.sendMessage(Component.text("Invalid color format: " + color + ". Use hex format like #FF0000")
-                        .color(NamedTextColor.RED));
-                return true;
-            }
-            colors.add(color);
-        }
-
-        if (colors.isEmpty()) {
-            sender.sendMessage(Component.text("At least one color is required.").color(NamedTextColor.RED));
-            return true;
-        }
-
-        // Create preset ID from name
-        String presetId = "custom_" + presetName.toLowerCase().replaceAll("[^a-z0-9]", "_");
-
-        // Check if preset already exists
-        if (globalPresetManager.hasPreset(presetId)) {
-            sender.sendMessage(Component.text("A preset with this name already exists.").color(NamedTextColor.RED));
-            return true;
-        }
-
-        // Create the preset
-        String permission = "chatcolors.preset." + presetName.toLowerCase().replaceAll("[^a-z0-9]", "_");
-        boolean success = globalPresetManager.createPreset(presetId, presetName, colors, permission);
-
-        if (success) {
-            try {
-                String previewMessage = ColorUtils.createGradientPreview(colors, "✓ Created preset: " + presetName);
-                Component message = MiniMessage.miniMessage().deserialize(previewMessage);
-                sender.sendMessage(message);
-            } catch (Exception e) {
-                sender.sendMessage(Component.text("✓ Created preset: " + presetName).color(NamedTextColor.GREEN));
-            }
-            sender.sendMessage(Component.text("Permission required: " + permission).color(NamedTextColor.GRAY));
-        } else {
-            sender.sendMessage(Component.text("Failed to create preset.").color(NamedTextColor.RED));
-        }
+        // Open AnvilGUI for preset naming
+        openPresetNamingGUI(player);
 
         return true;
+    }
+
+    private void openPresetNamingGUI(Player player) {
+        new AnvilGUI.Builder()
+                .plugin(plugin)
+                .title("Create New Preset")
+                .itemLeft(new ItemStack(Material.PAPER))
+                .text("Enter preset name")
+                .onClick((slot, stateSnapshot) -> {
+                    if (slot != AnvilGUI.Slot.OUTPUT) {
+                        return Arrays.asList();
+                    }
+
+                    String presetName = stateSnapshot.getText().trim();
+
+                    // Validate preset name
+                    if (presetName.isEmpty() || presetName.length() > 32) {
+                        return Arrays.asList(AnvilGUI.ResponseAction.replaceInputText("Name too long (max 32 chars)"));
+                    }
+
+                    if (!presetName.matches("^[a-zA-Z0-9 _-]+$")) {
+                        return Arrays.asList(AnvilGUI.ResponseAction
+                                .replaceInputText("Invalid characters! Use letters, numbers, spaces, - _"));
+                    }
+
+                    // Create preset ID from name
+                    String presetId = "custom_" + presetName.toLowerCase().replaceAll("[^a-z0-9]", "_");
+
+                    // Check if preset already exists
+                    if (globalPresetManager.hasPreset(presetId)) {
+                        return Arrays.asList(AnvilGUI.ResponseAction.replaceInputText("Preset already exists!"));
+                    }
+
+                    // Create a simple preset with default colors that can be customized
+                    List<String> defaultColors = Arrays.asList("#FF0000", "#00FF00", "#0000FF");
+                    GlobalPresetSettingsGUI settingsGUI = new GlobalPresetSettingsGUI(plugin, player, presetName,
+                            defaultColors);
+
+                    return Arrays.asList(
+                            AnvilGUI.ResponseAction.close(),
+                            AnvilGUI.ResponseAction.run(() -> settingsGUI.open()));
+                })
+                .open(player);
     }
 
     private boolean handleAdminDeleteCommand(CommandSender sender, String[] args) {

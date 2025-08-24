@@ -1,46 +1,76 @@
-# BetterChatColours Plugin - Development Plan
+# BetterChatColours Plugin - Global Preset System
 
 ## Overview
 
-A Paper 1.19.4 plugin that provides chat color gradients through PlaceholderAPI integration. Users select colors from a configurable palette to create gradients that can be saved as presets and used with any MiniMessage-compatible chat plugin.
+A Paper### 7. Admin Commands
+
+**Admin Management:**
+
+- `/chatcolors admin create` - Open AnvilGUI to create new global preset
+- `/chatcolors admin delete <preset>` - Delete global preset
+- `/chatcolors admin list` - List all global presets
+
+**User Management:**
+
+- `/chatcolors` - Open user menu to view and equip available presets
+- `/chatcolors equip <preset>` - Equip specific preset (if permission exists)
+- `/chatcolors clear` - Clear equipped preset (return to default)
+- `/chatcolors list` - List available presets for user
+
+**Admin Override Commands:**
+
+- `/chatcolors force <player> <preset>` - Force set player to use specific preset
+- `/chatcolors force <player> <color1> [color2] [color3]...` - Force set player gradient with hex codes
+- `/chatcolors unforce <player>` - Remove forced gradient (return to user's equipped preset)
+- `/chatcolors info <player>` - Show player's current gradient and preset infoin that provides chat color gradients through PlaceholderAPI integration. **Admins create global presets** that users can equip based on their permissions. Users cannot create their own presets - they can only select from available global presets.
 
 ## Core Features
 
-### 1. Color Palette System
+### 1. Global Preset System
 
-- Colors defined in `config.yml` with hex codes, permissions, and display names
-- Automatic hex code validation on startup (invalid codes warned and discarded)
-- Default permission fallback system for colors without specific permissions
+- **Admin-only preset creation**: Only admins can create, modify, and delete global presets
+- **Permission-based access**: Users can only see and equip presets they have permission for
+- **No user preset creation**: Users cannot create custom presets, only equip existing ones
+- Colors defined in `config.yml` are automatically converted to default global presets
 
 ### 2. GUI System
 
-#### Main Menu
+#### User Menu (Base Command: `/chatcolors`)
 
-- Display saved presets (up to configured limit)
-- "Create New Gradient" option
-- Real-time gradient preview in GUI title as colors are selected
+- **Preset Selection GUI**: Display all global presets the user has permission to use
+- **Equipment Interface**: Click to equip/unequip presets
+- **Preview System**: Show gradient preview for each preset
+- **No Creation Options**: Users cannot create new presets
 
-#### Color Selection Flow
+#### Admin Menu (`/chatcolors admin`)
 
-1. User selects colors sequentially from available palette
-2. GUI title updates to show gradient progress using MiniMessage format
-3. After selecting colors, display wool blocks matching closest colors
-4. User can click and drag to reorder colors in the gradient
-5. Save gradient with custom name as preset
+- **Global Preset Management**: Create, edit, delete global presets
+- **Permission Configuration**: Set required permissions for each preset
+- **User Override**: Force-equip presets on specific users
+- **Preset Library**: View all global presets and their settings
 
-#### Preset Management
+### 3. Permission-Based Access
 
-- View, edit, delete, and activate saved presets
-- Permission-based limits (capped at config maximum for predictability)
-- No unlimited presets permission - all users respect the config cap
+- Users can only see presets they have permission for
+- No preset limits - users can equip any preset they have access to
+- Admin permissions allow full preset management
 
 ### 3. Data Storage & Persistence
 
-- User presets stored persistently between server restarts
-- Current active gradient per user
-- Admin-forced gradients override user selections
+- **Global presets** stored in `global_presets.yml`
+- **User equipped presets** tracked per user (which global preset they have equipped)
+- **Admin forced gradients** override user selections
 
-### 4. PlaceholderAPI Integration
+### 4. GUI System
+
+Two primary interfaces:
+
+- **Admin Menu**: Accessible via `/chatcolors admin` - create, delete, and manage global presets
+- **User Menu**: Accessible via base `/chatcolors` - view and equip global presets they have permission for
+- **Preset permissions** control which presets users can see and equip
+- **AnvilGUI integration** for preset naming with live color preview
+
+### 5. PlaceholderAPI Integration
 
 #### Placeholders
 
@@ -55,7 +85,7 @@ A Paper 1.19.4 plugin that provides chat color gradients through PlaceholderAPI 
 - If no gradient set, return message unchanged (let chat plugin handle default formatting)
 - Use MiniMessage's built-in gradient construction (no manual gradient calculation needed)
 
-### 5. Permission System
+### 6. Permission System
 
 ```
 chatcolors.use - Basic access to plugin features
@@ -65,7 +95,7 @@ chatcolors.presets.<number> - Number of presets allowed (1, 3, 5, 10, etc.)
 chatcolors.admin - Administrative commands and overrides
 ```
 
-### 6. Admin Commands
+### 7. Admin Commands
 
 ```
 /chatcolors reload - Reload configuration
@@ -78,66 +108,119 @@ chatcolors.admin - Administrative commands and overrides
 /chatcolors info <player> - Show player's current gradient and preset info
 ```
 
-## Configuration Structure
+### 8. Configuration Structure
 
-### config.yml
+### config.yml - Default Presets
 
 ```yaml
-# Color palette available to users
-colours:
-  red:
-    permission: "chatcolors.color.red" # optional
-    colour: "#FF0000"
-    displayname: "Bright Red" # optional, defaults to "Red"
-  blue:
-    colour: "#0000FF"
-    # uses chatcolors.color.use permission by default
-  green:
-    colour: "#00FF00"
-    displayname: "Lime Green"
-  purple:
-    colour: "#800080"
-    permission: "chatcolors.color.vip"
-  gold:
-    colour: "#FFD700"
-    permission: "chatcolors.color.premium"
+# Default presets that get auto-converted to global presets on startup
+default_presets:
+  rainbow:
+    colors:
+      - "#FF0000" # Red
+      - "#FF7F00" # Orange
+      - "#FFFF00" # Yellow
+      - "#00FF00" # Green
+      - "#0000FF" # Blue
+      - "#4B0082" # Indigo
+      - "#9400D3" # Violet
+    permission: "chatcolors.preset.rainbow"
+
+  fire:
+    colors:
+      - "#FF4500" # OrangeRed
+      - "#FF6347" # Tomato
+      - "#FFD700" # Gold
+    permission: "chatcolors.preset.fire"
+
+  ocean:
+    colors:
+      - "#006994" # Deep Blue
+      - "#87CEEB" # Sky Blue
+    permission: "chatcolors.preset.ocean"
 
 # Plugin settings
 settings:
   max-colors-per-gradient: 5
-  max-presets-per-user: 10
   gui-size: 54
   validate-hex-codes: true
   strip-existing-colors: true
   preserve-formatting: true
-
-# Permission-based preset limits
-permissions:
-  preset-limits:
-    default: 3 # chatcolors.presets.3
-    vip: 5 # chatcolors.presets.5
-    premium: 10 # chatcolors.presets.10
 ```
+
+### global_presets.yml - Runtime Presets
+
+```yaml
+# Generated and managed by GlobalPresetManager
+presets:
+  rainbow:
+    id: "rainbow"
+    name: "Rainbow"
+    colors:
+      - "#FF0000"
+      - "#FF7F00"
+      - "#FFFF00"
+      - "#00FF00"
+      - "#0000FF"
+      - "#4B0082"
+      - "#9400D3"
+    permission: "chatcolors.preset.rainbow"
+
+  fire:
+    id: "fire"
+    name: "Fire"
+    colors:
+      - "#FF4500"
+      - "#FF6347"
+      - "#FFD700"
+    permission: "chatcolors.preset.fire"
+```
+
+### user_data.yml - Equipped Presets
+
+```yaml
+# Tracks which preset each user has equipped
+users:
+  "550e8400-e29b-41d4-a716-446655440000": # UUID
+    equipped_preset: "rainbow"
+  "6ba7b810-9dad-11d1-80b4-00c04fd430c8":
+    equipped_preset: "fire"
+
+# Admin forced gradients override equipped presets
+forced_gradients:
+  "550e8400-e29b-41d4-a716-446655440000":
+    colors:
+      - "#FF0000"
+      - "#00FF00"
+```
+
+### 9. Messages Configuration
 
 ### messages.yml
 
 ```yaml
 gui:
-  main-title: "&6Chat Colors - Select Preset"
-  create-title: "&6Creating Gradient: {gradient_preview}"
-  reorder-title: "&6Reorder Colors: {gradient_preview}"
+  preset-selection-title: "<gold><bold>Available Presets</bold></gold>"
+  admin-settings-title: "<red><bold>Admin: Global Presets</bold></red>"
+  no-presets: "<gray>No presets available</gray>"
 
 commands:
-  no-permission: "&cYou don't have permission to use this command."
-  player-not-found: "&cPlayer {player} not found."
-  preset-not-found: "&cPreset '{preset}' not found."
-  gradient-set: "&aGradient set for {player}."
-  gradient-cleared: "&aGradient cleared for {player}."
+  no-permission: "<red>You don't have permission to use this command.</red>"
+  player-not-found: "<red>Player {player} not found.</red>"
+  preset-not-found: "<red>Preset '{preset}' not found.</red>"
+  preset-equipped: "<green>Preset '{preset}' equipped!</green>"
+  preset-cleared: "<green>Preset cleared. Using default chat colors.</green>"
+  preset-created: "<green>Preset '{preset}' created successfully!</green>"
+  preset-deleted: "<green>Preset '{preset}' deleted!</green>"
+
+admin:
+  gradient-forced: "<green>Forced gradient set for {player}.</green>"
+  gradient-unforced: "<green>Forced gradient removed for {player}.</green>"
 
 errors:
-  invalid-hex: "&cInvalid hex code: {hex}. Skipping color '{color}'."
-  max-presets: "&cYou've reached your maximum preset limit ({limit})."
-  invalid-color: "&cColor '{color}' not found in palette."
+  invalid-hex: "<red>Invalid hex code: {hex}. Use format #RRGGBB.</red>"
+  preset-exists: "<red>Preset '{preset}' already exists!</red>"
+  no-permission-preset: "<red>You don't have permission to use preset '{preset}'.</red>"
 ```
 
 ## Technical Implementation
