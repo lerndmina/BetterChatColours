@@ -151,15 +151,16 @@ public class ChatInputManager implements Listener {
         if (!safeName.equals(input)) {
           player.sendMessage(Component.text("[SUCCESS] Preset name cleaned: " + safeName, NamedTextColor.GREEN));
         }
-        
+
         // Check for uniqueness and generate unique name if needed
         BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
         if (plugin.getGlobalPresetManager().presetExists(safeName)) {
           String uniqueName = plugin.getGlobalPresetManager().generateUniquePresetName(safeName);
-          player.sendMessage(Component.text("[SUCCESS] Name already exists! Using unique name: " + uniqueName, NamedTextColor.YELLOW));
+          player.sendMessage(
+              Component.text("[SUCCESS] Name already exists! Using unique name: " + uniqueName, NamedTextColor.YELLOW));
           return uniqueName;
         }
-        
+
         return safeName;
 
       case HEX_COLOR:

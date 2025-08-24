@@ -93,7 +93,8 @@ public class GlobalPresetManager {
     presets.put("green", new GlobalPresetData("green", List.of("#55FF55"), "chatcolor.preset.green"));
     presets.put("aqua", new GlobalPresetData("aqua", List.of("#55FFFF"), "chatcolor.preset.aqua"));
     presets.put("red", new GlobalPresetData("red", List.of("#FF5555"), "chatcolor.preset.red"));
-    presets.put("light_purple", new GlobalPresetData("light_purple", List.of("#FF55FF"), "chatcolor.preset.light_purple"));
+    presets.put("light_purple",
+        new GlobalPresetData("light_purple", List.of("#FF55FF"), "chatcolor.preset.light_purple"));
     presets.put("yellow", new GlobalPresetData("yellow", List.of("#FFFF55"), "chatcolor.preset.yellow"));
     presets.put("white", new GlobalPresetData("white", List.of("#FFFFFF"), "chatcolor.preset.white"));
 
@@ -136,7 +137,8 @@ public class GlobalPresetManager {
     List<String> sapphireColors = List.of("#000080", "#0000cd", "#4169e1", "#6495ed", "#87ceeb");
     presets.put("sapphire", new GlobalPresetData("sapphire", sapphireColors, "chatcolor.preset.sapphire"));
 
-    plugin.getLogger().info("Created " + presets.size() + " default presets (16 standard colors + 12 premium gradients)");
+    plugin.getLogger()
+        .info("Created " + presets.size() + " default presets (16 standard colors + 12 premium gradients)");
   }
 
   public void addPreset(String name, List<String> colors, String permission) {
@@ -153,12 +155,12 @@ public class GlobalPresetManager {
   public String generateUniquePresetName(String baseName) {
     String name = baseName;
     int counter = 1;
-    
+
     while (presetExists(name)) {
       name = baseName + "_" + counter;
       counter++;
     }
-    
+
     return name;
   }
 

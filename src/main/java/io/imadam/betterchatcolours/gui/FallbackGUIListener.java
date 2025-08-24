@@ -149,13 +149,15 @@ public class FallbackGUIListener implements Listener {
         BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
         String inventoryTitle = event.getView().getTitle();
         boolean editMode = isEditMode(inventoryTitle);
-        
+
         plugin.getGlobalPresetManager().addPreset(presetName, colors);
         String permission = "chatcolor.preset." + presetName.toLowerCase();
-        
+
         String action = editMode ? "updated" : "created";
-        player.sendMessage(Component.text("Preset '" + presetName + "' " + action + " successfully! Permission: " + permission, NamedTextColor.GREEN));
-        
+        player.sendMessage(
+            Component.text("Preset '" + presetName + "' " + action + " successfully! Permission: " + permission,
+                NamedTextColor.GREEN));
+
         if (editMode) {
           AdminPresetEditGUI.open(player);
         } else {
