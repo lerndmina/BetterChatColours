@@ -2,6 +2,7 @@ package io.imadam.betterchatcolours.gui.items;
 
 import io.imadam.betterchatcolours.BetterChatColours;
 import io.imadam.betterchatcolours.data.GlobalPresetData;
+import io.imadam.betterchatcolours.gui.GUIUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -26,13 +27,26 @@ public class PresetItem extends AbstractItem {
   @Override
   public ItemProvider getItemProvider() {
     String gradientName = applyGradientToText(preset.getName());
+    
+    // Get the material based on the first color in the gradient
+    Material iconMaterial = getIconMaterial();
 
-    return new ItemBuilder(Material.PAPER)
+    return new ItemBuilder(iconMaterial)
         .setDisplayName(gradientName)
         .addLoreLines(
             "§7Colors: " + preset.getColors().size(),
             "",
             "§aClick to equip this preset");
+  }
+
+  private Material getIconMaterial() {
+    if (preset.getColors() == null || preset.getColors().isEmpty()) {
+      return Material.PAPER; // Fallback for presets with no colors
+    }
+    
+    // Use the first color in the gradient to determine the icon
+    String firstColor = preset.getColors().get(0);
+    return GUIUtils.getClosestConcreteColor(firstColor);
   }
 
   private String applyGradientToText(String text) {

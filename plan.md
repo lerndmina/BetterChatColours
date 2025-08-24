@@ -378,6 +378,16 @@ public class ColorItem extends AbstractItem {
   - **Auto-handling**: InvUI automatically handles click events and page navigation
 - **Result**: Both user preset selection and admin preset editing now have working pagination
 
+### Visual Preset Icons (Added)
+
+- **Problem**: All preset items used generic paper icons, making it hard to distinguish presets when changing pages
+- **Solution**: Dynamic icon materials based on gradient colors:
+  - **Color Analysis**: Added `GUIUtils.getClosestConcreteColor()` method to match hex colors to concrete blocks
+  - **Smart Mapping**: Uses the first color in each gradient to determine the icon material
+  - **Enhanced Coverage**: Supports 16 concrete colors (Red, Orange, Yellow, Lime, Green, Cyan, Blue, Light Blue, Magenta, Pink, Purple, White, Black, Gray, Light Gray, Brown)
+  - **Fallback**: Uses paper icon for presets without colors
+- **Result**: Each preset now has a visually distinctive icon that represents its gradient, making page changes obvious and preset identification instant
+
 ## Key Changes from Previous Approach
 
 1. **Security First**: InvUI provides built-in protection against item theft

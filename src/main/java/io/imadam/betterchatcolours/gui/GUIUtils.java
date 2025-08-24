@@ -114,4 +114,61 @@ public class GUIUtils {
       return Material.WHITE_DYE;
     }
   }
+
+  public static Material getClosestConcreteColor(String hexColor) {
+    if (hexColor == null || hexColor.isEmpty()) {
+      return Material.WHITE_CONCRETE;
+    }
+
+    // Remove # if present
+    if (hexColor.startsWith("#")) {
+      hexColor = hexColor.substring(1);
+    }
+
+    try {
+      int rgb = Integer.parseInt(hexColor, 16);
+      int r = (rgb >> 16) & 0xFF;
+      int g = (rgb >> 8) & 0xFF;
+      int b = rgb & 0xFF;
+
+      // Enhanced color matching logic for concrete blocks
+      if (r > 200 && g < 100 && b < 100)
+        return Material.RED_CONCRETE;
+      if (r > 200 && g > 150 && b < 100)
+        return Material.ORANGE_CONCRETE;
+      if (r > 200 && g > 200 && b < 100)
+        return Material.YELLOW_CONCRETE;
+      if (r < 100 && g > 200 && b < 100)
+        return Material.LIME_CONCRETE;
+      if (r < 100 && g > 100 && b < 100)
+        return Material.GREEN_CONCRETE;
+      if (r < 100 && g > 150 && b > 150)
+        return Material.CYAN_CONCRETE;
+      if (r < 100 && g < 100 && b > 200)
+        return Material.BLUE_CONCRETE;
+      if (r < 100 && g < 150 && b > 150)
+        return Material.LIGHT_BLUE_CONCRETE;
+      if (r > 150 && g < 100 && b > 150)
+        return Material.MAGENTA_CONCRETE;
+      if (r > 150 && g < 150 && b > 150)
+        return Material.PINK_CONCRETE;
+      if (r > 150 && g > 100 && b > 200)
+        return Material.PURPLE_CONCRETE;
+      if (r > 200 && g > 200 && b > 200)
+        return Material.WHITE_CONCRETE;
+      if (r < 50 && g < 50 && b < 50)
+        return Material.BLACK_CONCRETE;
+      if (r < 100 && g < 100 && b < 100)
+        return Material.GRAY_CONCRETE;
+      if (r < 150 && g < 150 && b < 150)
+        return Material.LIGHT_GRAY_CONCRETE;
+      if (r > 100 && g > 50 && b < 50)
+        return Material.BROWN_CONCRETE;
+
+      return Material.LIGHT_GRAY_CONCRETE;
+
+    } catch (NumberFormatException e) {
+      return Material.WHITE_CONCRETE;
+    }
+  }
 }

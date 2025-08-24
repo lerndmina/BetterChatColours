@@ -2,6 +2,7 @@ package io.imadam.betterchatcolours.gui;
 
 import io.imadam.betterchatcolours.BetterChatColours;
 import io.imadam.betterchatcolours.data.GlobalPresetData;
+import io.imadam.betterchatcolours.gui.GUIUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
@@ -76,7 +77,10 @@ public class InvUIAdminPresetEditGUI {
             // Create gradient preview for display name using the same method as PresetItem
             String gradientName = applyGradientToText(preset.getName());
             
-            return new ItemBuilder(Material.PAPER)
+            // Get the material based on the first color in the gradient
+            Material iconMaterial = getIconMaterial();
+            
+            return new ItemBuilder(iconMaterial)
                     .setDisplayName(gradientName)
                     .addLoreLines(
                             "§7Colors: §f" + preset.getColors().size(),
@@ -85,6 +89,16 @@ public class InvUIAdminPresetEditGUI {
                             "§eLeft click: §7Edit preset",
                             "§eRight click: §7Delete preset"
                     );
+        }
+
+        private Material getIconMaterial() {
+            if (preset.getColors() == null || preset.getColors().isEmpty()) {
+                return Material.PAPER; // Fallback for presets with no colors
+            }
+            
+            // Use the first color in the gradient to determine the icon
+            String firstColor = preset.getColors().get(0);
+            return GUIUtils.getClosestConcreteColor(firstColor);
         }
 
         private String applyGradientToText(String text) {
