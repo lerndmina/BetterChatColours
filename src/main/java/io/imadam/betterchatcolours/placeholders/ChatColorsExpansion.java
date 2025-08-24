@@ -61,12 +61,22 @@ public class ChatColorsExpansion extends PlaceholderExpansion {
       case "after":
         return preset.getClosingTag();
 
+      case "preset":
+        return preset.getName();
+
       default:
-        // Handle process:MESSAGE format
+        // Handle process:MESSAGE format - but we need to handle this differently
         if (identifier.toLowerCase().startsWith("process:")) {
           String message = identifier.substring(8); // Remove "process:" prefix
           return processMessage(preset, message);
         }
+
+        // Handle direct message processing with RelationalPlaceholder-style approach
+        // This allows for %chatcolor_<message>% format
+        if (!identifier.isEmpty()) {
+          return processMessage(preset, identifier);
+        }
+
         return "";
     }
   }
@@ -76,7 +86,17 @@ public class ChatColorsExpansion extends PlaceholderExpansion {
       return "";
     }
 
-    // Create the full gradient message
+    // If the message is still a placeholder (like {message}), we need to return the
+    // gradient
+    // tags so that ChatControlRed can process them after it replaces {message}
+    if (message.equals("{message}") || message.startsWith("{") && message.endsWith("}")) {
+      // Return the gradient tags that will wrap around the message
+      // ChatControlRed will process this as: gradient_tag + actual_message +
+      // closing_tag
+      return preset.getGradientTag() + "{message}" + preset.getClosingTag();
+    }
+
+    // If we have an actual message (not a placeholder), process it normally
     String gradientMessage = preset.getGradientTag() + message + preset.getClosingTag();
 
     try {
@@ -84,9 +104,9 @@ public class ChatColorsExpansion extends PlaceholderExpansion {
       var component = miniMessage.deserialize(gradientMessage);
       return LegacyComponentSerializer.legacySection().serialize(component);
     } catch (Exception e) {
-      // If parsing fails, return the original message
+      // If parsing fails, return the gradient tags around the original message
       plugin.getLogger().warning("Failed to process gradient message: " + gradientMessage);
-      return message;
+      return preset.getGradientTag() + message + preset.getClosingTag();
     }
   }
 }
