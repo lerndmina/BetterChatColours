@@ -352,8 +352,9 @@ public class ColorItem extends AbstractItem {
 5. ✅ **Preset Deletion**: Added ability to delete existing presets with confirmation
 6. ✅ **Enhanced Default Presets**: Added all standard Minecraft colors and premium gradients
 7. ✅ **GUI Chat Input Fix**: Fixed GUI not closing when requesting chat input for colors
-8. ✅ **Testing & Polish**: All major features tested and working
-9. 🔄 **Performance Optimization**: Optimize for large numbers of presets
+8. ✅ **Pagination Fix**: Fixed broken pagination in both preset selection and admin edit GUIs
+9. ✅ **Testing & Polish**: All major features tested and working
+10. 🔄 **Performance Optimization**: Optimize for large numbers of presets
 
 ## Recent Fixes
 
@@ -365,6 +366,17 @@ public class ColorItem extends AbstractItem {
   - `AddColorItem.handleClick()` - for adding new colors
   - `ColorSlotItem.handleClick()` - for editing existing colors
 - **Result**: GUI now properly closes, allowing players to type in chat
+
+### Pagination Issue (Fixed)
+
+- **Problem**: Pagination buttons in both PresetSelectionGUI and InvUIAdminPresetEditGUI were not working
+- **Cause**: Using invalid `ControlItem<PagedGui<Item>>` class that doesn't exist in InvUI
+- **Solution**: Replaced custom pagination with proper InvUI `PageItem` implementation:
+  - **Import**: Added `xyz.xenondevs.invui.item.impl.controlitem.PageItem`
+  - **Previous Page**: `new PageItem(false)` with red glass pane design
+  - **Next Page**: `new PageItem(true)` with green glass pane design
+  - **Auto-handling**: InvUI automatically handles click events and page navigation
+- **Result**: Both user preset selection and admin preset editing now have working pagination
 
 ## Key Changes from Previous Approach
 

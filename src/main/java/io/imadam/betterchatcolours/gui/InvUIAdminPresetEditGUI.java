@@ -6,6 +6,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.xenondevs.invui.gui.PagedGui;
 import xyz.xenondevs.invui.gui.structure.Markers;
@@ -14,6 +16,7 @@ import xyz.xenondevs.invui.item.Item;
 import xyz.xenondevs.invui.item.ItemProvider;
 import xyz.xenondevs.invui.item.builder.ItemBuilder;
 import xyz.xenondevs.invui.item.impl.AbstractItem;
+import xyz.xenondevs.invui.item.impl.controlitem.PageItem;
 import xyz.xenondevs.invui.window.Window;
 
 import java.util.ArrayList;
@@ -49,9 +52,12 @@ public class InvUIAdminPresetEditGUI {
                 .setContent(presetItems)
                 .build();
 
+        // Create title with current page info
+        String title = "§8Edit Presets §7(Page " + (gui.getCurrentPage() + 1) + "/" + gui.getPageAmount() + ")";
+
         Window window = Window.single()
                 .setViewer(player)
-                .setTitle("§8Edit Presets")
+                .setTitle(title)
                 .setGui(gui)
                 .build();
 
@@ -135,33 +141,37 @@ public class InvUIAdminPresetEditGUI {
         }
     }
 
-    private static class PreviousPageItem extends AbstractItem {
-        @Override
-        public ItemProvider getItemProvider() {
-            return new ItemBuilder(Material.ARROW)
-                    .setDisplayName("§e§lPrevious Page")
-                    .addLoreLines("§7Click to go to previous page");
+    private static class PreviousPageItem extends PageItem {
+        public PreviousPageItem() {
+            super(false); // false = previous page
         }
 
         @Override
-        public void handleClick(org.bukkit.event.inventory.ClickType clickType, Player player, org.bukkit.event.inventory.InventoryClickEvent event) {
-            // InvUI handles pagination automatically for PagedGui
-            // This is just a placeholder for visual consistency
+        public ItemProvider getItemProvider(PagedGui<?> gui) {
+            return new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
+                    .setDisplayName("§e§lPrevious Page")
+                    .addLoreLines(
+                            gui.hasPreviousPage() 
+                                ? "§7Go to page " + gui.getCurrentPage() + "/" + gui.getPageAmount()
+                                : "§7You can't go further back"
+                    );
         }
     }
 
-    private static class NextPageItem extends AbstractItem {
-        @Override
-        public ItemProvider getItemProvider() {
-            return new ItemBuilder(Material.ARROW)
-                    .setDisplayName("§e§lNext Page")
-                    .addLoreLines("§7Click to go to next page");
+    private static class NextPageItem extends PageItem {
+        public NextPageItem() {
+            super(true); // true = next page
         }
 
         @Override
-        public void handleClick(org.bukkit.event.inventory.ClickType clickType, Player player, org.bukkit.event.inventory.InventoryClickEvent event) {
-            // InvUI handles pagination automatically for PagedGui
-            // This is just a placeholder for visual consistency
+        public ItemProvider getItemProvider(PagedGui<?> gui) {
+            return new ItemBuilder(Material.GREEN_STAINED_GLASS_PANE)
+                    .setDisplayName("§e§lNext Page")
+                    .addLoreLines(
+                            gui.hasNextPage() 
+                                ? "§7Go to page " + (gui.getCurrentPage() + 2) + "/" + gui.getPageAmount()
+                                : "§7There are no more pages"
+                    );
         }
     }
 }

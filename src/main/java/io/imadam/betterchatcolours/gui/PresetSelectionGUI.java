@@ -5,13 +5,21 @@ import io.imadam.betterchatcolours.data.GlobalPresetData;
 import io.imadam.betterchatcolours.gui.items.BackToMainItem;
 import io.imadam.betterchatcolours.gui.items.CloseMenuItem;
 import io.imadam.betterchatcolours.gui.items.PresetItem;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.xenondevs.invui.gui.PagedGui;
 import xyz.xenondevs.invui.gui.structure.Markers;
 import xyz.xenondevs.invui.gui.structure.Structure;
 import xyz.xenondevs.invui.item.Item;
+import xyz.xenondevs.invui.item.ItemProvider;
+import xyz.xenondevs.invui.item.builder.ItemBuilder;
+import xyz.xenondevs.invui.item.impl.AbstractItem;
+import xyz.xenondevs.invui.item.impl.controlitem.PageItem;
 import xyz.xenondevs.invui.window.Window;
+import xyz.xenondevs.inventoryaccess.component.ComponentWrapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,8 +52,8 @@ public class PresetSelectionGUI {
         "# # # < # > # b #")
         .addIngredient('#', GUIUtils.createGlassPane())
         .addIngredient('x', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
-        .addIngredient('<', GUIUtils.createGlassPane()) // Previous page (handled by InvUI)
-        .addIngredient('>', GUIUtils.createGlassPane()) // Next page (handled by InvUI)
+        .addIngredient('<', new PreviousPageItem()) // Previous page
+        .addIngredient('>', new NextPageItem()) // Next page
         .addIngredient('b', isAdmin ? new BackToMainItem() : new CloseMenuItem());
 
     PagedGui<Item> gui = PagedGui.items()
@@ -53,12 +61,50 @@ public class PresetSelectionGUI {
         .setContent(presetItems)
         .build();
 
+    // Create title with current page info
+    String title = "§8Available Presets §7(Page " + (gui.getCurrentPage() + 1) + "/" + gui.getPageAmount() + ")";
+
     Window window = Window.single()
         .setViewer(player)
-        .setTitle("§8Available Presets")
+        .setTitle(title)
         .setGui(gui)
         .build();
 
     window.open();
+  }
+
+  // Pagination control items using InvUI's built-in PageItem
+  private static class PreviousPageItem extends PageItem {
+    public PreviousPageItem() {
+      super(false); // false = previous page
+    }
+
+    @Override
+    public ItemProvider getItemProvider(PagedGui<?> gui) {
+      return new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
+          .setDisplayName("§e§lPrevious Page")
+          .addLoreLines(
+              gui.hasPreviousPage() 
+                  ? "§7Go to page " + gui.getCurrentPage() + "/" + gui.getPageAmount()
+                  : "§7You can't go further back"
+          );
+    }
+  }
+
+  private static class NextPageItem extends PageItem {
+    public NextPageItem() {
+      super(true); // true = next page
+    }
+
+    @Override
+    public ItemProvider getItemProvider(PagedGui<?> gui) {
+      return new ItemBuilder(Material.GREEN_STAINED_GLASS_PANE)
+          .setDisplayName("§e§lNext Page")
+          .addLoreLines(
+              gui.hasNextPage() 
+                  ? "§7Go to page " + (gui.getCurrentPage() + 2) + "/" + gui.getPageAmount()
+                  : "§7There are no more pages"
+          );
+    }
   }
 }
