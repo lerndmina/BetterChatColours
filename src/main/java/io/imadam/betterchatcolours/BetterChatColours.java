@@ -34,11 +34,21 @@ public class BetterChatColours extends JavaPlugin {
     globalPresetManager.loadPresets();
     userDataManager.loadUserData();
 
-    // Register commands
-    getCommand("chatcolors").setExecutor(new ChatColorsCommand(this));
+    // Register commands (main command and aliases)
+    ChatColorsCommand commandExecutor = new ChatColorsCommand(this);
+    getCommand("chatcolors").setExecutor(commandExecutor);
+    
+    // Register aliases explicitly to ensure they work
+    if (getCommand("cc") != null) {
+      getCommand("cc").setExecutor(commandExecutor);
+    }
+    if (getCommand("chatcolor") != null) {
+      getCommand("chatcolor").setExecutor(commandExecutor);
+    }
 
-    // Register listeners (only ChatInputManager needed - InvUI handles GUI events internally)
+    // Register listeners
     getServer().getPluginManager().registerEvents(new io.imadam.betterchatcolours.gui.ChatInputManager(), this);
+    getServer().getPluginManager().registerEvents(new io.imadam.betterchatcolours.listeners.PermissionListener(), this);
 
     // Register PlaceholderAPI expansion if available
     if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {

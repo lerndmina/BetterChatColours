@@ -103,19 +103,10 @@ public class GlobalPresetManager {
         "#0080ff", "#0000ff", "#8000ff", "#ff00ff", "#ff0080");
     presets.put("rainbow", new GlobalPresetData("rainbow", rainbowColors, "chatcolor.preset.rainbow"));
 
-    List<String> fireColors = List.of("#ff4500", "#ff6347", "#ffd700");
-    presets.put("fire", new GlobalPresetData("fire", fireColors, "chatcolor.preset.fire"));
-
     List<String> oceanColors = List.of("#006994", "#0080ff", "#00bfff");
     presets.put("ocean", new GlobalPresetData("ocean", oceanColors, "chatcolor.preset.ocean"));
 
-    List<String> forestColors = List.of("#228b22", "#32cd32", "#90ee90");
-    presets.put("forest", new GlobalPresetData("forest", forestColors, "chatcolor.preset.forest"));
-
     // Additional Premium Gradients
-    List<String> sunsetColors = List.of("#ff4500", "#ff6347", "#ff7f50", "#ffd700", "#ffb347");
-    presets.put("sunset", new GlobalPresetData("sunset", sunsetColors, "chatcolor.preset.sunset"));
-
     List<String> crystalColors = List.of("#e6e6fa", "#dda0dd", "#da70d6", "#ba55d3", "#9370db");
     presets.put("crystal", new GlobalPresetData("crystal", crystalColors, "chatcolor.preset.crystal"));
 
@@ -138,7 +129,7 @@ public class GlobalPresetManager {
     presets.put("sapphire", new GlobalPresetData("sapphire", sapphireColors, "chatcolor.preset.sapphire"));
 
     plugin.getLogger()
-        .info("Created " + presets.size() + " default presets (16 standard colors + 12 premium gradients)");
+        .info("Created " + presets.size() + " default presets (16 standard colors + 9 premium gradients)");
   }
 
   public void addPreset(String name, List<String> colors, String permission) {

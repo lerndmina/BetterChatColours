@@ -5,6 +5,7 @@ import io.imadam.betterchatcolours.data.GlobalPresetData;
 import io.imadam.betterchatcolours.gui.items.BackToMainItem;
 import io.imadam.betterchatcolours.gui.items.CloseMenuItem;
 import io.imadam.betterchatcolours.gui.items.PresetItem;
+import io.imadam.betterchatcolours.gui.items.UnequipPresetItem;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -30,6 +31,9 @@ public class PresetSelectionGUI {
     BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
     boolean isAdmin = player.hasPermission("chatcolor.admin");
 
+    // Check if player's current preset is still valid
+    plugin.getUserDataManager().checkAndUnequipInvalidPreset(player);
+
     // Get available presets for this player
     List<GlobalPresetData> availablePresets = plugin.getGlobalPresetManager()
         .getAllPresets()
@@ -38,7 +42,15 @@ public class PresetSelectionGUI {
         .filter(preset -> preset.getPermission() == null ||
             preset.getPermission().isEmpty() ||
             player.hasPermission(preset.getPermission()))
-        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName())) // Alphabetical sort
+        .sorted((a, b) -> {
+          // First sort by color count (descending - higher numbers first)
+          int colorCountCompare = Integer.compare(b.getColors().size(), a.getColors().size());
+          if (colorCountCompare != 0) {
+            return colorCountCompare;
+          }
+          // Then sort alphabetically (ascending)
+          return a.getName().compareToIgnoreCase(b.getName());
+        })
         .collect(Collectors.toList());
 
     // Convert to PresetItems (as Items)
@@ -52,9 +64,10 @@ public class PresetSelectionGUI {
         "# x x x x x x x #",
         "# x x x x x x x #",
         "# x x x x x x x #",
-        "# # # < # > # b #")
+        "# u # < # > # b #")
         .addIngredient('#', GUIUtils.createGlassPane())
         .addIngredient('x', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
+        .addIngredient('u', new UnequipPresetItem()) // Unequip button
         .addIngredient('<', new PreviousPageItem()) // Previous page
         .addIngredient('>', new NextPageItem()) // Next page
         .addIngredient('b', isAdmin ? new BackToMainItem() : new CloseMenuItem());

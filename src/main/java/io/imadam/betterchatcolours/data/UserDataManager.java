@@ -111,4 +111,35 @@ public class UserDataManager {
     userEquippedPresets.remove(playerUuid);
     saveUserData();
   }
+
+  /**
+   * Checks if a player still has permission for their equipped preset.
+   * If not, automatically unequips it.
+   * @param player The player to check
+   * @return true if the preset was unequipped due to lack of permission
+   */
+  public boolean checkAndUnequipInvalidPreset(Player player) {
+    String equippedPreset = getEquippedPreset(player);
+    if (equippedPreset == null || equippedPreset.isEmpty()) {
+      return false; // No preset equipped
+    }
+
+    GlobalPresetData preset = plugin.getGlobalPresetManager().getPreset(equippedPreset);
+    if (preset == null) {
+      // Preset no longer exists, unequip it
+      clearEquippedPreset(player);
+      return true;
+    }
+
+    // Check if player still has permission for this preset
+    String permission = preset.getPermission();
+    if (permission != null && !permission.isEmpty() && !player.hasPermission(permission)) {
+      // Player lost permission, unequip the preset
+      clearEquippedPreset(player);
+      player.sendMessage("§c§lNotice: §7Your chatcolor preset '§e" + preset.getName() + "§7' has been unequipped because you no longer have permission to use it.");
+      return true;
+    }
+
+    return false; // Preset is still valid
+  }
 }

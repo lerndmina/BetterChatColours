@@ -31,9 +31,17 @@ public class InvUIAdminPresetEditGUI {
         BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
         Map<String, GlobalPresetData> allPresets = plugin.getGlobalPresetManager().getAllPresets();
 
-        // Create preset items and sort alphabetically
+        // Create preset items and sort by color count (descending) then alphabetically
         List<Item> presetItems = allPresets.values().stream()
-                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName())) // Alphabetical sort
+                .sorted((a, b) -> {
+                  // First sort by color count (descending - higher numbers first)
+                  int colorCountCompare = Integer.compare(b.getColors().size(), a.getColors().size());
+                  if (colorCountCompare != 0) {
+                    return colorCountCompare;
+                  }
+                  // Then sort alphabetically (ascending)
+                  return a.getName().compareToIgnoreCase(b.getName());
+                })
                 .map(EditablePresetItem::new)
                 .collect(Collectors.toList());
 

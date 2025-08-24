@@ -8,7 +8,15 @@ commands:
   chatcolors:
     description: Access chat color presets
     aliases: [cc, chatcolor]
-    permission: betterchatcolours.use
+    permission: chatcolor.use
+    usage: /<command> [admin]
+  cc:
+    description: Access chat color presets (alias)
+    permission: chatcolor.use
+    usage: /<command> [admin]
+  chatcolor:
+    description: Access chat color presets (alias)
+    permission: chatcolor.use
     usage: /<command> [admin]
 
 permissions:

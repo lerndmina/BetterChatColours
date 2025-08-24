@@ -44,13 +44,24 @@ public class ChatColorsExpansion extends PlaceholderExpansion {
       return "";
     }
 
+    // Check if player's current preset is still valid (permission check)
+    plugin.getUserDataManager().checkAndUnequipInvalidPreset(player);
+
     String equippedPreset = plugin.getUserDataManager().getEquippedPreset(player);
     if (equippedPreset == null || equippedPreset.isEmpty()) {
+      // For process: placeholders, return the original message when no preset is equipped
+      if (identifier.toLowerCase().startsWith("process:")) {
+        return identifier.substring(8); // Return the message without the "process:" prefix
+      }
       return "";
     }
 
     GlobalPresetData preset = plugin.getGlobalPresetManager().getPreset(equippedPreset);
     if (preset == null) {
+      // For process: placeholders, return the original message when preset is not found
+      if (identifier.toLowerCase().startsWith("process:")) {
+        return identifier.substring(8); // Return the message without the "process:" prefix
+      }
       return "";
     }
 
