@@ -15,9 +15,9 @@ permissions:
   betterchatcolours.use:
     description: Use basic chat color features
     default: true
-  betterchatcolours.admin:
+  chatcolor.admin:
     description: Manage global presets
     default: op
-  betterchatcolours.preset.*:
+  chatcolor.preset.*:
     description: Access to all presets
     default: op

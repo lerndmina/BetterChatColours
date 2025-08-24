@@ -28,7 +28,7 @@ public class PresetSelectionGUI {
 
   public static void open(Player player) {
     BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
-    boolean isAdmin = player.hasPermission("betterchatcolours.admin");
+    boolean isAdmin = player.hasPermission("chatcolor.admin");
 
     // Get available presets for this player
     List<GlobalPresetData> availablePresets = plugin.getGlobalPresetManager()
@@ -38,6 +38,7 @@ public class PresetSelectionGUI {
         .filter(preset -> preset.getPermission() == null ||
             preset.getPermission().isEmpty() ||
             player.hasPermission(preset.getPermission()))
+        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName())) // Alphabetical sort
         .collect(Collectors.toList());
 
     // Convert to PresetItems (as Items)
@@ -47,6 +48,8 @@ public class PresetSelectionGUI {
 
     Structure structure = new Structure(
         "# # # # # # # # #",
+        "# x x x x x x x #",
+        "# x x x x x x x #",
         "# x x x x x x x #",
         "# x x x x x x x #",
         "# # # < # > # b #")

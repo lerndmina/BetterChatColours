@@ -23,6 +23,7 @@ import xyz.xenondevs.invui.window.Window;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class InvUIAdminPresetEditGUI {
 
@@ -30,18 +31,19 @@ public class InvUIAdminPresetEditGUI {
         BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
         Map<String, GlobalPresetData> allPresets = plugin.getGlobalPresetManager().getAllPresets();
 
-        // Create preset items
-        List<Item> presetItems = new ArrayList<>();
-        for (GlobalPresetData preset : allPresets.values()) {
-            presetItems.add(new EditablePresetItem(preset));
-        }
+        // Create preset items and sort alphabetically
+        List<Item> presetItems = allPresets.values().stream()
+                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName())) // Alphabetical sort
+                .map(EditablePresetItem::new)
+                .collect(Collectors.toList());
 
         Structure structure = new Structure(
                 "# # # # # # # # #",
                 "# x x x x x x x #",
                 "# x x x x x x x #",
-                "# < # # # # # > #",
-                "# # # b # # # # #")
+                "# x x x x x x x #",
+                "# x x x x x x x #",
+                "# < # # b # # > #")
                 .addIngredient('#', GUIUtils.createGlassPane())
                 .addIngredient('x', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
                 .addIngredient('<', new PreviousPageItem())

@@ -11,7 +11,7 @@ import xyz.xenondevs.invui.window.Window;
 public class MainMenuGUI {
 
   public static void open(Player player) {
-    boolean isAdmin = player.hasPermission("betterchatcolours.admin");
+    boolean isAdmin = player.hasPermission("chatcolor.admin");
 
     Structure structure;
     if (isAdmin) {

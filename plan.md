@@ -388,6 +388,17 @@ public class ColorItem extends AbstractItem {
   - **Fallback**: Uses paper icon for presets without colors
 - **Result**: Each preset now has a visually distinctive icon that represents its gradient, making page changes obvious and preset identification instant
 
+### Enhanced GUI Layout & Organization (Added)
+
+- **Problem**: Small 4-row GUIs showing only 14 presets per page, making navigation tedious for servers with many presets
+- **Solution**: Expanded to double chest size with alphabetical sorting:
+  - **Double Chest Size**: Increased from 4 rows to 6 rows (54 total slots)
+  - **More Content Area**: Expanded from 14 preset slots to 28 preset slots per page
+  - **Alphabetical Sorting**: All presets now display in A-Z order for easy finding
+  - **Both GUIs Updated**: PresetSelectionGUI (users) and InvUIAdminPresetEditGUI (admins)
+  - **Streamlined Processing**: Replaced manual loops with efficient stream operations
+- **Result**: Users can see twice as many presets per page and find them alphabetically, dramatically reducing pagination needs
+
 ## Key Changes from Previous Approach
 
 1. **Security First**: InvUI provides built-in protection against item theft

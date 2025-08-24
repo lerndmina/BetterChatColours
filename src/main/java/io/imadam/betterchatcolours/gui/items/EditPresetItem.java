@@ -25,7 +25,7 @@ public class EditPresetItem extends AbstractItem {
 
   @Override
   public void handleClick(ClickType clickType, Player player, InventoryClickEvent event) {
-    if (!player.hasPermission("betterchatcolours.admin")) {
+    if (!player.hasPermission("chatcolor.admin")) {
       player.sendMessage(Component.text("You don't have permission to edit presets!", NamedTextColor.RED));
       return;
     }

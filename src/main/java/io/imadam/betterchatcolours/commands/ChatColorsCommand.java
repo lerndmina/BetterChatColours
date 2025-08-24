@@ -30,14 +30,14 @@ public class ChatColorsCommand implements CommandExecutor {
     Player player = (Player) sender;
 
     // Check if player has basic permission
-    if (!player.hasPermission("betterchatcolours.use")) {
+    if (!player.hasPermission("chatcolor.use")) {
       player.sendMessage(Component.text("You don't have permission to use this command!", NamedTextColor.RED));
       return true;
     }
 
     // Handle reload subcommand
     if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-      if (!player.hasPermission("betterchatcolours.admin")) {
+      if (!player.hasPermission("chatcolor.admin")) {
         player.sendMessage(Component.text("You don't have permission to reload the plugin!", NamedTextColor.RED));
         return true;
       }
