@@ -1,8 +1,8 @@
 name: BetterChatColours
-version: '${project.version}'
+version: '${version}'
 description: A Paper plugin for chat color gradients with PlaceholderAPI integration
 author: WildDev
-website: https://github.com/Wild/BetterChatColours
+website: https://github.com/Lerndmina/BetterChatColours
 main: com.wilddev.betterchatcolours.BetterChatColours
 api-version: '1.19'
 depend: [PlaceholderAPI]

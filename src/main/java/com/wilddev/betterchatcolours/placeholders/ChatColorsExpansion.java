@@ -22,12 +22,13 @@ public class ChatColorsExpansion extends PlaceholderExpansion {
     
     @Override
     public @NotNull String getAuthor() {
-        return plugin.getDescription().getAuthors().toString();
+        return "WildDev"; // Keep this simple since it won't change often
     }
     
     @Override
+    @SuppressWarnings("deprecation")
     public @NotNull String getVersion() {
-        return plugin.getDescription().getVersion();
+        return plugin.getDescription().getVersion(); // Deprecated but still the standard way
     }
     
     @Override

@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+}
+
+def pluginVersion = '1.0.0-SNAPSHOT'
+
+group = 'com.wilddev'
+version = pluginVersion
+description = 'A Paper plugin for chat color gradients with PlaceholderAPI integration'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+compileJava {
+    options.compilerArgs += ['-Xlint:deprecation']
+}
+
+repositories {
+    mavenCentral()
+    
+    // Paper
+    maven {
+        name = 'papermc-repo'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+    
+    // PlaceholderAPI
+    maven {
+        name = 'placeholderapi'
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+    }
+}
+
+dependencies {
+    // Paper API
+    compileOnly 'io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT'
+    
+    // PlaceholderAPI
+    compileOnly 'me.clip:placeholderapi:2.11.6'
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+// Set encoding for compilation
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
