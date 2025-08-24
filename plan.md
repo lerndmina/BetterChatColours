@@ -25,19 +25,24 @@ A Paper 1.19.4 plugin that provides chat color gradients through PlaceholderAPI 
 - **Clean Code**: Separation of GUI logic from display (Window system)
 - **Rich Items**: AbstractItem, ControlItem, CycleItem, etc.
 
-#### User Menu (Base Command: `/chatcolors`)
+#### Unified GUI System (Single Command: `/chatcolors`)
 
+- **Main Menu GUI**: Central hub that adapts based on user permissions
+  - **For Regular Users**: Direct access to preset selection and equipment
+  - **For Admins**: Additional options for preset management and administration
 - **Preset Selection GUI**: Paged GUI displaying all available global presets
 - **Equipment Interface**: Click to equip/unequip presets with instant feedback
 - **Preview System**: Live gradient preview in item names and lore
-- **No Creation Options**: Users cannot create new presets
+- **Admin Features** (permission-gated within main GUI):
+  - **Global Preset Management**: Create, edit, delete global presets through GUI
+  - **Color Editor**: Interactive color selection with live preview
+  - **Permission Configuration**: Set required permissions through AnvilGUI
+  - **All Text Input via AnvilGUI**: Preset names, colors, permissions, etc.
 
-#### Admin Menu (`/chatcolors admin create`)
+#### Reload Command (`/chatcolors reload`)
 
-- **Global Preset Management**: Secure GUI for creating/editing global presets
-- **Color Editor**: Interactive color selection with live preview in GUI title
-- **Permission Configuration**: Set required permissions for each preset
-- **AnvilGUI Integration**: Professional preset naming interface
+- **Admin-only reload**: Reload configuration and presets from files
+- **No GUI**: Simple command with text feedback
 
 ### 3. Permission-Based Access (Unchanged)
 
@@ -79,13 +84,14 @@ A Paper 1.19.4 plugin that provides chat color gradients through PlaceholderAPI 
 src/main/java/io/imadam/betterchatcolours/
 ├── BetterChatColours.java (Main - includes InvUI.getInstance().setPlugin(this))
 ├── commands/
-│   ├── ChatColorsCommand.java
+│   ├── ChatColorsCommand.java (Single command with GUI dispatch)
 │   └── CommandTabCompleter.java
 ├── data/
 │   ├── GlobalPresetManager.java (Unchanged)
 │   ├── UserDataManager.java (Unchanged)
 │   └── GlobalPresetData.java (Unchanged)
-├── gui/ (Complete Rewrite with InvUI)
+├── gui/ (Complete GUI-Based System)
+│   ├── MainMenuGUI.java (Permission-based main hub)
 │   ├── PresetSelectionGUI.java (PagedGui with custom items)
 │   ├── GlobalPresetSettingsGUI.java (Normal GUI with color editing)
 │   ├── items/
@@ -93,7 +99,14 @@ src/main/java/io/imadam/betterchatcolours/
 │   │   ├── ColorItem.java (extends AbstractItem)
 │   │   ├── AddColorItem.java (extends AbstractItem)
 │   │   ├── PermissionItem.java (extends AbstractItem)
-│   │   └── SavePresetItem.java (extends AbstractItem)
+│   │   ├── SavePresetItem.java (extends AbstractItem)
+│   │   ├── CreatePresetItem.java (extends AbstractItem)
+│   │   ├── EditPresetItem.java (extends AbstractItem)
+│   │   └── DeletePresetItem.java (extends AbstractItem)
+│   ├── anvil/
+│   │   ├── PresetNameGUI.java (AnvilGUI for naming)
+│   │   ├── ColorInputGUI.java (AnvilGUI for hex colors)
+│   │   └── PermissionInputGUI.java (AnvilGUI for permissions)
 │   └── GUIUtils.java (InvUI helper methods)
 ├── placeholders/
 │   └── ChatColorsExpansion.java (Unchanged)
@@ -102,6 +115,45 @@ src/main/java/io/imadam/betterchatcolours/
 ```
 
 ### GUI Implementation Examples
+
+#### Main Menu GUI (Permission-Based Hub)
+
+```java
+public class MainMenuGUI {
+    public void open(Player player) {
+        boolean isAdmin = player.hasPermission("chatcolors.admin");
+
+        Gui.Builder<?, ?> builder = Gui.normal()
+            .setStructure(
+                "# # # # # # # # #",
+                "# s # # # # # # #",
+                "# # # # # # # # #");
+
+        if (isAdmin) {
+            builder.setStructure(
+                "# # # # # # # # #",
+                "# s # c # e # d #",
+                "# # # # # # # # #")
+                .addIngredient('c', new CreatePresetItem())
+                .addIngredient('e', new EditPresetItem())
+                .addIngredient('d', new DeletePresetItem());
+        }
+
+        Gui gui = builder
+            .addIngredient('#', new SimpleItem(new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE)))
+            .addIngredient('s', new SelectPresetsItem())
+            .build();
+
+        Window window = Window.single()
+            .setViewer(player)
+            .setTitle(isAdmin ? "Chat Colors - Admin Menu" : "Chat Colors")
+            .setGui(gui)
+            .build();
+
+        window.open();
+    }
+}
+```
 
 #### Preset Selection GUI (InvUI Paged)
 
