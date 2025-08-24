@@ -54,9 +54,7 @@ public class ChatColorsCommand implements CommandExecutor {
 
     // Open main menu GUI
     try {
-      // Use fallback GUI for now (InvUI version compatibility issue)
-      io.imadam.betterchatcolours.gui.FallbackMainMenuGUI.open(player);
-      // MainMenuGUI.open(player);
+      MainMenuGUI.open(player);
     } catch (Exception e) {
       player.sendMessage(Component.text("Error opening GUI: " + e.getMessage(), NamedTextColor.RED));
       plugin.getLogger().severe("Error opening main menu GUI: " + e.getMessage());

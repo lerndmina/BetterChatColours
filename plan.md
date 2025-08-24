@@ -50,9 +50,9 @@ A Paper 1.19.4 plugin that provides chat color gradients through PlaceholderAPI 
 - No preset limits - users can equip any preset they have access to
 - Admin permissions allow full preset management
 
-## Technical Implementation (Updated)
+## Technical Implementation (✅ COMPLETE)
 
-### InvUI Integration
+### InvUI Integration (✅ IMPLEMENTED)
 
 #### Dependencies
 
@@ -65,39 +65,57 @@ A Paper 1.19.4 plugin that provides chat color gradients through PlaceholderAPI 
 <dependency>
     <groupId>xyz.xenondevs.invui</groupId>
     <artifactId>invui</artifactId>
-    <version>1.34</version>
+    <version>1.46</version>
     <type>pom</type>
 </dependency>
 ```
 
-#### GUI Architecture
+#### Compatibility (✅ FIXED)
 
-- **Builder Pattern**: Use `Gui.normal()` and `Gui.paged()` builders
-- **Structure System**: Visual layout definition similar to shaped recipes
-- **Custom Items**: Extend `AbstractItem` for interactive elements
-- **Windows**: Separate display logic from GUI logic
-- **Security**: Built-in protection against item theft and duplication
+- **Java 17 Target**: Plugin compiled for Java 17 compatibility (major version 61)
+- **Paper 1.19.4**: Fully compatible with Paper 1.19.4 servers (r15 implementation included)
+- **Complete InvUI**: All version-specific implementations (r1-r24) included and properly relocated
+- **Server Requirements**: Java 17+ (standard for Paper 1.19.4)
 
-### Project Structure (Updated)
+#### GUI Architecture (✅ IMPLEMENTED)
+
+- **Builder Pattern**: Using `PagedGui.Builder` and `Gui.normal()` builders
+- **Custom Items**: All interactive elements extend AbstractItem
+- **PagedGui System**: Implemented for preset selection and editing
+- **AnvilGUI Integration**: Text input for preset names, colors, permissions
+- **Security**: Complete protection against item theft and duplication
+- **Pure InvUI**: No fallback system - all GUI operations handled by InvUI framework
+
+### Project Structure (✅ COMPLETE)
 
 ```
 src/main/java/io/imadam/betterchatcolours/
-├── BetterChatColours.java (Main - includes InvUI.getInstance().setPlugin(this))
+├── BetterChatColours.java (✅ InvUI registered, only ChatInputManager event listener)
 ├── commands/
-│   ├── ChatColorsCommand.java (Single command with GUI dispatch)
-│   └── CommandTabCompleter.java
+│   └── ChatColorsCommand.java (✅ Single command with InvUI GUI dispatch)
 ├── data/
-│   ├── GlobalPresetManager.java (Unchanged)
-│   ├── UserDataManager.java (Unchanged)
-│   └── GlobalPresetData.java (Unchanged)
-├── gui/ (Complete GUI-Based System)
-│   ├── MainMenuGUI.java (Permission-based main hub)
-│   ├── PresetSelectionGUI.java (PagedGui with custom items)
-│   ├── GlobalPresetSettingsGUI.java (Normal GUI with color editing)
-│   ├── items/
-│   │   ├── PresetItem.java (extends AbstractItem)
-│   │   ├── ColorItem.java (extends AbstractItem)
-│   │   ├── AddColorItem.java (extends AbstractItem)
+│   ├── GlobalPresetManager.java (✅ Enhanced with automatic permissions)
+│   ├── UserDataManager.java (✅ Complete)
+│   └── GlobalPresetData.java (✅ Complete)
+├── gui/ (✅ Complete InvUI-Based System)
+│   ├── MainMenuGUI.java (✅ Permission-based main hub)
+│   ├── PresetSelectionGUI.java (✅ PagedGui implementation)
+│   ├── InvUIAdminPresetCreateGUI.java (✅ Complete preset creation system)
+│   ├── InvUIAdminPresetEditGUI.java (✅ Paginated preset editing)
+│   ├── ChatInputManager.java (✅ AnvilGUI integration)
+│   ├── GUIUtils.java (✅ Utility methods)
+│   └── items/ (✅ All Custom InvUI Items)
+│       ├── PresetItem.java (✅ extends AbstractItem)
+│       ├── CreatePresetItem.java (✅ extends AbstractItem)
+│       ├── EditPresetItem.java (✅ extends AbstractItem)
+│       ├── SelectPresetsItem.java (✅ extends AbstractItem)
+│       └── preset/
+│           ├── AddColorItem.java (✅ extends AbstractItem)
+│           ├── ColorItem.java (✅ extends AbstractItem)
+│           ├── PermissionItem.java (✅ extends AbstractItem)
+│           └── PresetNameItem.java (✅ extends AbstractItem)
+└── placeholders/
+    └── ChatColorsExpansion.java (✅ PlaceholderAPI integration)
 │   │   ├── PermissionItem.java (extends AbstractItem)
 │   │   ├── SavePresetItem.java (extends AbstractItem)
 │   │   ├── CreatePresetItem.java (extends AbstractItem)

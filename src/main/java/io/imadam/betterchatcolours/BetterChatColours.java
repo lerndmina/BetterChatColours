@@ -37,8 +37,7 @@ public class BetterChatColours extends JavaPlugin {
     // Register commands
     getCommand("chatcolors").setExecutor(new ChatColorsCommand(this));
 
-    // Register listeners
-    getServer().getPluginManager().registerEvents(new io.imadam.betterchatcolours.gui.FallbackGUIListener(), this);
+    // Register listeners (only ChatInputManager needed - InvUI handles GUI events internally)
     getServer().getPluginManager().registerEvents(new io.imadam.betterchatcolours.gui.ChatInputManager(), this);
 
     // Register PlaceholderAPI expansion if available
