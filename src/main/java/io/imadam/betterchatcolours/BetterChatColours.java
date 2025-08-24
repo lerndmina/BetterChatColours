@@ -39,6 +39,7 @@ public class BetterChatColours extends JavaPlugin {
 
     // Register listeners
     getServer().getPluginManager().registerEvents(new io.imadam.betterchatcolours.gui.FallbackGUIListener(), this);
+    getServer().getPluginManager().registerEvents(new io.imadam.betterchatcolours.gui.ChatInputManager(), this);
 
     // Register PlaceholderAPI expansion if available
     if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {

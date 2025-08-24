@@ -11,6 +11,9 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FallbackGUIListener implements Listener {
 
   @EventHandler
@@ -21,7 +24,7 @@ public class FallbackGUIListener implements Listener {
     String title = event.getView().getTitle();
 
     // Prevent taking items from our GUIs
-    if (title.startsWith("Chat Colors") || title.equals("Available Presets")) {
+    if (title.startsWith("Chat Colors") || title.equals("Available Presets") || title.startsWith("Create New Preset")) {
       event.setCancelled(true);
 
       if (event.getCurrentItem() == null)
@@ -31,6 +34,8 @@ public class FallbackGUIListener implements Listener {
         handleMainMenuClick(player, event);
       } else if (title.equals("Available Presets")) {
         handlePresetSelectionClick(player, event);
+      } else if (title.startsWith("Create New Preset")) {
+        handleAdminCreateClick(player, event);
       }
     }
   }
@@ -51,11 +56,18 @@ public class FallbackGUIListener implements Listener {
         FallbackMainMenuGUI.openPresetSelection(player);
       }
       case "Create Preset" -> {
+        if (!player.hasPermission("betterchatcolours.admin")) {
+          player.sendMessage(Component.text("You don't have permission to create presets!", NamedTextColor.RED));
+          return;
+        }
         player.closeInventory();
-        player.sendMessage(
-            Component.text("Preset creation coming soon! (AnvilGUI integration needed)", NamedTextColor.YELLOW));
+        AdminPresetCreateGUI.open(player);
       }
       case "Edit Presets" -> {
+        if (!player.hasPermission("betterchatcolours.admin")) {
+          player.sendMessage(Component.text("You don't have permission to edit presets!", NamedTextColor.RED));
+          return;
+        }
         player.closeInventory();
         player.sendMessage(Component.text("Preset editing coming soon!", NamedTextColor.YELLOW));
       }
@@ -102,5 +114,149 @@ public class FallbackGUIListener implements Listener {
     } else {
       player.sendMessage(Component.text("Preset not found!", NamedTextColor.RED));
     }
+  }
+
+  private void handleAdminCreateClick(Player player, InventoryClickEvent event) {
+    if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta())
+      return;
+
+    ItemMeta meta = event.getCurrentItem().getItemMeta();
+    Component displayName = meta.displayName();
+    if (displayName == null)
+      return;
+
+    String itemName = ((net.kyori.adventure.text.TextComponent) displayName).content();
+    String title = event.getView().getTitle();
+
+    // Extract preset name from title
+    String presetName = title.substring("Create New Preset: ".length());
+
+    switch (itemName) {
+      case "Add Color" -> {
+        player.closeInventory();
+        openColorInput(player, presetName, getCurrentColors(event.getInventory()));
+      }
+      case "Set Permission" -> {
+        player.closeInventory();
+        openPermissionInput(player, presetName, getCurrentColors(event.getInventory()));
+      }
+      case "Save Preset" -> {
+        List<String> colors = getCurrentColors(event.getInventory());
+        if (colors.isEmpty()) {
+          player.sendMessage(Component.text("Cannot save preset without colors!", NamedTextColor.RED));
+          return;
+        }
+
+        BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
+        plugin.getGlobalPresetManager().addPreset(presetName, colors, "");
+        player.sendMessage(Component.text("Preset '" + presetName + "' created successfully!", NamedTextColor.GREEN));
+        player.closeInventory();
+      }
+      case "Cancel" -> {
+        player.closeInventory();
+        FallbackMainMenuGUI.open(player);
+      }
+      default -> {
+        // Handle color item clicks
+        if (itemName.startsWith("Color ")) {
+          // Extract color index from lore
+          String colorIndex = extractColorIndex(meta);
+          if (colorIndex != null) {
+            List<String> colors = getCurrentColors(event.getInventory());
+            if (event.getClick().isRightClick()) {
+              // Remove color
+              int index = Integer.parseInt(colorIndex);
+              if (index >= 0 && index < colors.size()) {
+                colors.remove(index);
+                AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, colors);
+              }
+            } else if (event.getClick().isLeftClick()) {
+              // Edit color
+              int index = Integer.parseInt(colorIndex);
+              if (index >= 0 && index < colors.size()) {
+                openColorEditInput(player, presetName, colors, index);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private void openColorInput(Player player, String presetName, List<String> currentColors) {
+    ChatInputManager.requestHexColor(player, presetName, currentColors,
+        hexColor -> {
+          currentColors.add(hexColor);
+          AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, currentColors);
+        },
+        () -> AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, currentColors));
+  }
+
+  private void openColorEditInput(Player player, String presetName, List<String> colors, int index) {
+    ChatInputManager.requestHexColorEdit(player, presetName, colors, index,
+        hexColor -> {
+          colors.set(index, hexColor);
+          AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, colors);
+        },
+        () -> AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, colors));
+  }
+
+  private void openPermissionInput(Player player, String presetName, List<String> colors) {
+    ChatInputManager.requestPermission(player, presetName, colors,
+        permission -> {
+          BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
+
+          if (!colors.isEmpty()) {
+            plugin.getGlobalPresetManager().addPreset(presetName, colors, permission);
+            if (permission.isEmpty()) {
+              player.sendMessage(
+                  Component.text("[SUCCESS] Preset '" + presetName + "' created successfully! (No permission required)",
+                      NamedTextColor.GREEN));
+            } else {
+              player.sendMessage(
+                  Component.text("[SUCCESS] Preset '" + presetName + "' created with permission: " + permission,
+                      NamedTextColor.GREEN));
+            }
+            FallbackMainMenuGUI.open(player);
+          } else {
+            player.sendMessage(Component.text("[ERROR] Cannot save preset without colors!", NamedTextColor.RED));
+            AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, colors);
+          }
+        },
+        () -> AdminPresetCreateGUI.openColorSelectionGUI(player, presetName, colors));
+  }
+
+  private List<String> getCurrentColors(org.bukkit.inventory.Inventory inventory) {
+    List<String> colors = new ArrayList<>();
+    for (int i = 0; i < inventory.getSize() - 9; i++) { // Exclude bottom row
+      var item = inventory.getItem(i);
+      if (item != null && item.hasItemMeta()) {
+        var meta = item.getItemMeta();
+        if (meta.displayName() != null) {
+          String displayName = ((net.kyori.adventure.text.TextComponent) meta.displayName()).content();
+          if (displayName.startsWith("Color ")) {
+            // Extract hex color from display name
+            String[] parts = displayName.split(": ");
+            if (parts.length > 1) {
+              colors.add(parts[1]);
+            }
+          }
+        }
+      }
+    }
+    return colors;
+  }
+
+  private String extractColorIndex(ItemMeta meta) {
+    if (meta.lore() == null)
+      return null;
+
+    for (Component loreComponent : meta.lore()) {
+      String loreText = ((net.kyori.adventure.text.TextComponent) loreComponent).content();
+      if (loreText.startsWith("__COLOR_INDEX__")) {
+        return loreText.substring("__COLOR_INDEX__".length());
+      }
+    }
+    return null;
   }
 }
