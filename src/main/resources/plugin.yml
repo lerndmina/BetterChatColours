@@ -12,7 +12,7 @@ commands:
     usage: /<command> [admin]
 
 permissions:
-  betterchatcolours.use:
+  chatcolor.use:
     description: Use basic chat color features
     default: true
   chatcolor.admin:
