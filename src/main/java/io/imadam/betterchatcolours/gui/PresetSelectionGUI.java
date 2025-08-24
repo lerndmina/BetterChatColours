@@ -296,6 +296,8 @@ public class PresetSelectionGUI {
   }
 
   public void openGUI() {
+    // Register this GUI with the listener
+    plugin.getGuiListener().registerPresetSelectionGUI(player, this);
     player.openInventory(inventory);
   }
 

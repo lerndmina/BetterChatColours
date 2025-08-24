@@ -232,48 +232,4 @@ public class UserDataManager {
 
         return plugin.getGlobalPresetManager().canPlayerUsePreset(player, presetId);
     }
-
-    // === MIGRATION AND CLEANUP ===
-
-    /**
-     * Migrates old user presets to equipped presets (for backward compatibility)
-     * This should be run once during the transition
-     */
-    public void migrateOldPresets() {
-        plugin.getLogger().info("Starting migration of old user presets...");
-
-        File[] userFiles = dataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
-        if (userFiles == null)
-            return;
-
-        int migrated = 0;
-        for (File userFile : userFiles) {
-            String fileName = userFile.getName();
-            String uuidString = fileName.substring(0, fileName.length() - 4);
-
-            try {
-                UUID.fromString(uuidString); // Validate UUID format
-                FileConfiguration config = YamlConfiguration.loadConfiguration(userFile);
-
-                // Check for old active-gradient format
-                if (config.contains("active-gradient") && !config.contains("equipped-preset")) {
-                    // For now, just clear the old format - users will need to re-select presets
-                    config.set("active-gradient", null);
-                    config.save(userFile);
-                    migrated++;
-                }
-
-                // Remove old user-created presets section
-                if (config.contains("presets")) {
-                    config.set("presets", null);
-                    config.save(userFile);
-                }
-
-            } catch (Exception e) {
-                plugin.getLogger().warning("Failed to migrate " + fileName + ": " + e.getMessage());
-            }
-        }
-
-        plugin.getLogger().info("Migration completed. " + migrated + " users will need to re-select their presets.");
-    }
 }

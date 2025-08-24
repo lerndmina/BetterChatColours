@@ -44,7 +44,7 @@ public class GlobalPresetSettingsGUI {
   public void open() {
     createInventory();
     populateInventory();
-    plugin.getGuiListener().registerGlobalSettings(player, this);
+    plugin.getGuiListener().registerGlobalPresetSettingsGUI(player, this);
     player.openInventory(inventory);
   }
 
@@ -145,7 +145,7 @@ public class GlobalPresetSettingsGUI {
         break;
       case 18: // Cancel
         player.closeInventory();
-        new MainMenuGUI(plugin, player).open();
+        new PresetSelectionGUI(plugin, player).openGUI();
         break;
       case 22: // Save
         saveGlobalPreset();
@@ -203,7 +203,7 @@ public class GlobalPresetSettingsGUI {
       player.sendMessage(Component.text("Published: " + (isPublished ? "Yes" : "No"), NamedTextColor.GRAY));
 
       player.closeInventory();
-      new MainMenuGUI(plugin, player).open();
+      new PresetSelectionGUI(plugin, player).openGUI();
 
     } catch (Exception e) {
       plugin.getLogger().warning("Error saving global preset: " + e.getMessage());
