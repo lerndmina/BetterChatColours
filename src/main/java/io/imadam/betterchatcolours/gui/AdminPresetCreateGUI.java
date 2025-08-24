@@ -73,10 +73,11 @@ public class AdminPresetCreateGUI {
     // Permission button
     ItemStack permission = new ItemStack(Material.NAME_TAG);
     ItemMeta permMeta = permission.getItemMeta();
-    permMeta.displayName(Component.text("Set Permission", NamedTextColor.YELLOW));
+    permMeta.displayName(Component.text("Save Preset", NamedTextColor.YELLOW));
     List<Component> permLore = new ArrayList<>();
-    permLore.add(Component.text("Click to set required", NamedTextColor.GRAY));
-    permLore.add(Component.text("permission for this preset", NamedTextColor.GRAY));
+    permLore.add(Component.text("Click to save preset with", NamedTextColor.GRAY));
+    permLore.add(Component.text("auto-generated permission:", NamedTextColor.GRAY));
+    permLore.add(Component.text("chatcolor.preset." + presetName.toLowerCase(), NamedTextColor.AQUA));
     permMeta.lore(permLore);
     permission.setItemMeta(permMeta);
     inv.setItem(bottomRow + 3, permission);

@@ -139,7 +139,7 @@ public class FallbackGUIListener implements Listener {
         player.closeInventory();
         openColorInput(player, presetName, getCurrentColors(event.getInventory()));
       }
-      case "Set Permission" -> {
+      case "Save Preset" -> {
         List<String> colors = getCurrentColors(event.getInventory());
         if (colors.isEmpty()) {
           player.sendMessage(Component.text("Cannot save preset without colors!", NamedTextColor.RED));
@@ -161,19 +161,6 @@ public class FallbackGUIListener implements Listener {
         } else {
           player.closeInventory();
         }
-      }
-      case "Save Preset" -> {
-        List<String> colors = getCurrentColors(event.getInventory());
-        if (colors.isEmpty()) {
-          player.sendMessage(Component.text("Cannot save preset without colors!", NamedTextColor.RED));
-          return;
-        }
-
-        BetterChatColours plugin = JavaPlugin.getPlugin(BetterChatColours.class);
-        plugin.getGlobalPresetManager().addPreset(presetName, colors);
-        String permission = "chatcolor.preset." + presetName.toLowerCase();
-        player.sendMessage(Component.text("Preset '" + presetName + "' created successfully! Permission: " + permission, NamedTextColor.GREEN));
-        player.closeInventory();
       }
       case "Cancel" -> {
         player.closeInventory();
