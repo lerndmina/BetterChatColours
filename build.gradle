@@ -4,7 +4,7 @@ plugins {
 
 def pluginVersion = '1.0.0-SNAPSHOT'
 
-group = 'com.wilddev'
+group = 'io.imadam'
 version = pluginVersion
 description = 'A Paper plugin for chat color gradients with PlaceholderAPI integration'
 
@@ -31,6 +31,18 @@ repositories {
         name = 'placeholderapi'
         url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
     }
+    
+    // CodeMC for AnvilGUI
+    maven {
+        name = 'codemc-repo'
+        url = 'https://repo.codemc.org/repository/maven-public/'
+    }
+    
+    // Sonatype for AnvilGUI snapshots
+    maven {
+        name = 'sonatype-snapshots'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
 }
 
 dependencies {
@@ -39,6 +51,26 @@ dependencies {
     
     // PlaceholderAPI
     compileOnly 'me.clip:placeholderapi:2.11.6'
+    
+    // AnvilGUI for preset naming
+    implementation 'net.wesjd:anvilgui:1.10.0-SNAPSHOT'
+    
+    // Test dependencies
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.5.0'
+    
+    // For testing with Bukkit/Paper
+    testImplementation 'io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
 }
 
 processResources {
